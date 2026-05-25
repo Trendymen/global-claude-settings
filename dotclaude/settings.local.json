@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:nga.178.com)",
+      "WebSearch"
+    ]
+  }
+}

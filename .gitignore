@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Editor noise
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# install.sh 备份产物（如果有人在仓库目录跑过 restore）
+*.before-restore-*
+
+# Hooks 旧备份
+dotclaude/hooks/*.bak-*
+
+# 临时文件
+*.tmp
+*.log

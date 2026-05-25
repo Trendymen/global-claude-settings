@@ -1,0 +1,10 @@
+# Managed by ~/.claude/switch-claude.js
+unset ANTHROPIC_BASE_URL
+unset ANTHROPIC_AUTH_TOKEN
+unset ANTHROPIC_MODEL
+unset API_TIMEOUT_MS
+unset NO_PROXY
+unset DISABLE_TELEMETRY
+unset DISABLE_COST_WARNINGS
+unset CLAUDE_CODE_USE_BEDROCK
+export CLAUDE_RUNTIME_MODE="official"

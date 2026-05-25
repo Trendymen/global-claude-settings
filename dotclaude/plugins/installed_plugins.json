@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "plugins": {
+    "superpowers@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/liuzhuo/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0",
+        "version": "5.1.0",
+        "installedAt": "2026-03-17T02:38:33.862Z",
+        "lastUpdated": "2026-05-06T01:36:47.049Z",
+        "gitCommitSha": "1128a721ca3b7fd76bf12e8392cdeb89cfcfcf2a"
+      }
+    ],
+    "context7@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/liuzhuo/.claude/plugins/cache/claude-plugins-official/context7/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-19T10:09:11.425Z",
+        "lastUpdated": "2026-05-25T07:48:11.114Z",
+        "gitCommitSha": "1b527e2ee74e6dbd198e22cd41701c3b6f47dfec"
+      }
+    ],
+    "frontend-design@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/liuzhuo/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown",
+        "version": "unknown",
+        "installedAt": "2026-04-01T03:07:13.785Z",
+        "lastUpdated": "2026-05-25T07:48:11.114Z",
+        "gitCommitSha": "1b527e2ee74e6dbd198e22cd41701c3b6f47dfec"
+      }
+    ],
+    "code-review@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/liuzhuo/.claude/plugins/cache/claude-plugins-official/code-review/unknown",
+        "version": "unknown",
+        "installedAt": "2026-04-01T03:07:25.595Z",
+        "lastUpdated": "2026-05-25T07:48:11.113Z",
+        "gitCommitSha": "1b527e2ee74e6dbd198e22cd41701c3b6f47dfec"
+      }
+    ]
+  }
+}

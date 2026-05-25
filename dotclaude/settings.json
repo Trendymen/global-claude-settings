@@ -1,0 +1,124 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(fd:*)",
+      "Bash(find:*)",
+      "Bash(eza:*)",
+      "Bash(bat:*)",
+      "Bash(jq:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git stash:*)",
+      "Bash(node:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run:*)",
+      "Bash(pnpm:*)",
+      "Bash(tsc:*)",
+      "WebFetch(domain:nga.178.com)",
+      "WebSearch"
+    ],
+    "defaultMode": "bypassPermissions"
+  },
+  "model": "opus[1m]",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"[Diagnostics 提醒] 代码已修改。结束本次任务前请使用 mcp__vscode-mcp-server__* 检查本次改动文件的 diagnostics（CLAUDE.md Diagnostics 校验规则）。若 vscode-mcp-server 不可用，需在最终回复中明确说明已跳过及原因。\"},\"suppressOutput\":true}'"
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/superpowers-skill-reminder.sh PostToolUse"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/superpowers-skill-reminder.sh PreToolUse"
+          }
+        ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/ask-user-question-validator.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/prefer-node-script.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/prefer-node-script.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/stop-detect-text-question.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); model=$(echo \"$input\" | jq -r '.model.display_name // \"unknown\"'); dir=$(echo \"$input\" | jq -r '.workspace.current_dir // .cwd // \"\"'); short_dir=$(echo \"$dir\" | awk -F/ '{n=NF; if(n>=2) print $(n-1)\"/\"$n; else print $n}'); branch=$(git -C \"$dir\" symbolic-ref --short HEAD 2>/dev/null); used=$(echo \"$input\" | jq -r '.context_window.used_percentage // empty'); out=\"$model  $short_dir\"; [ -n \"$branch\" ] && out=\"$out  $branch\"; [ -n \"$used\" ] && out=\"$out  ctx:$(printf '%.0f' \"$used\")%\"; echo \"$out\""
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true
+  },
+  "effortLevel": "xhigh",
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark-daltonized",
+  "skipAutoPermissionPrompt": true,
+  "smallFastModel": "sonnet[1m]",
+  "mcpServers": {
+    "vscode-mcp-server": {
+      "type": "http",
+      "url": "http://127.0.0.1:3000/mcp"
+    }
+  }
+}
