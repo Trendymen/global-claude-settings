@@ -1,0 +1,47 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:developers.openai.com)",
+      "mcp__ben-cocos-mcp__prefab_prefab_instance",
+      "mcp__ben-cocos-mcp__node_node_query",
+      "WebFetch(domain:github.com)",
+      "mcp__ben-cocos-mcp__scene_scene_query_system",
+      "mcp__ben-cocos-mcp__node_node_hierarchy",
+      "mcp__ben-cocos-mcp__prefab_prefab_edit",
+      "mcp__ben-cocos-mcp__node_node_lifecycle",
+      "mcp__ben-cocos-mcp__component_component_query",
+      "mcp__ben-cocos-mcp__node_node_script_management",
+      "mcp__ide__getDiagnostics",
+      "mcp__ben-cocos-mcp__component_set_component_property",
+      "mcp__ben-cocos-mcp__component_component_manage",
+      "mcp__ben-cocos-mcp__component_configure_click_event",
+      "mcp__vscode-server-mcp__get_diagnostics_code",
+      "mcp__ben-cocos-mcp__node_node_transform",
+      "mcp__ben-cocos-mcp__prefab_prefab_browse",
+      "mcp__ben-cocos-mcp__assetAdvanced_asset_system",
+      "Bash(cat)",
+      "Read(//Users/liuzhuo/**)"
+    ],
+    "dangerouslySkipPermissions": true
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "ben-cocos-mcp",
+    "cocos-mcp-server",
+    "chrome-devtools"
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/agent-tools/hooks/check-rule-sync.js\""
+          }
+        ]
+      }
+    ]
+  },
+  "defaultMode": "bypassPermissions"
+}
