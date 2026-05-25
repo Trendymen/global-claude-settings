@@ -79,18 +79,23 @@ claude mcp list
 
 `settings.json` 引用了 `http://127.0.0.1:3000/mcp`，需要在 VS Code 装好对应扩展并启动监听端口才能工作；缺失时 Claude Code 会忽略并提示，不影响其他功能。
 
-## 还原项目级 .claude/ 配置
+## 项目级配置（不在本仓库）
 
-项目级 `.claude/`（含 `settings.local.json`、`skills/`）在 `CreatorFramework` 团队仓库里被 `.git/info/exclude` 排除，集中备份在本仓库 `projects/<项目名>/.claude/` 下。
+`CreatorFramework` 项目根的 `.claude/` 以及 `CLAUDE.md` / `AGENTS.md` / `.mcp.json` / `agent-tools/` / `.cursor/rules/` / `docs/superpowers/` 等被 `.git/info/exclude` 本地排除的 AI 工作流文件，**统一由 aigit 工具同步到独立私人 remote** `git@github.com:Trendymen/CreatorFramework-ai.git`。
 
-新机器上克隆完 `CreatorFramework` 项目后：
+新机器上还原项目级配置：
 
 ```bash
+# 1. 准备 aigit 裸仓库（克隆 CreatorFramework-ai 到 ~/.ai-configs 下）
+mkdir -p ~/.ai-configs
+git clone --bare git@github.com:Trendymen/CreatorFramework-ai.git ~/.ai-configs/CreatorFramework-ai.git
+
+# 2. 把 aigit 追踪的所有 AI 文件 checkout 到 CreatorFramework 工作区
 PROJECT_DIR=~/path/to/CreatorFramework
-cp -R ~/.claude/global-claude-settings/projects/CreatorFramework/.claude/. "$PROJECT_DIR/.claude/"
+git --git-dir=~/.ai-configs/CreatorFramework-ai.git --work-tree="$PROJECT_DIR" checkout -- .
 ```
 
-注意：项目根的 `CLAUDE.md` / `AGENTS.md` / `.mcp.json` / `agent-tools/` / `docs/superpowers/` 等也在本地 exclude 中，但它们由 **aigit** 工具统一同步到独立的私人 remote `git@github.com:Trendymen/CreatorFramework-ai.git`，本仓库不重复备份。
+注：`agent-tools/aigit.js` 由 aigit 自己追踪，checkout 后即可用 `node agent-tools/aigit.js status` 验证。
 
 ## 同步回仓库（修改了 ~/.claude 之后）
 

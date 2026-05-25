@@ -20,20 +20,13 @@
 │   ├── hooks/                  # PreToolUse / PostToolUse / Stop 钩子脚本
 │   ├── skills/                 # 自定义 skill（当前为空）
 │   └── plugins/                # 插件清单（不含源码，新机用 /plugin 命令重装）
-├── projects/                   # 项目级 .claude/ 配置备份（每个项目一个子目录）
-│   └── CreatorFramework/
-│       └── .claude/
-│           ├── settings.local.json   # 项目级 MCP 权限、hooks、enabledMcpjsonServers
-│           └── skills/               # 项目专属 skills（cocos-web-debugging 等）
 ├── docs/
 │   └── RESTORE.md              # 详细还原步骤
 ├── install.sh                  # 一键还原脚本
 └── README.md                   # 本文件
 ```
 
-> 项目级 `.claude/` 在 `CreatorFramework` 仓库里被 `.git/info/exclude` 本地排除（不入团队 remote），所以集中在本仓库里备份。新机器上克隆完项目后手动 `cp -R projects/CreatorFramework/.claude <项目路径>/.claude` 即可。
->
-> 项目里其他被 exclude 的 AI 工作流文件（`CLAUDE.md` / `AGENTS.md` / `.mcp.json` / `agent-tools/` / `docs/superpowers/` 等）由 **aigit** 工具同步到独立私人 remote `Trendymen/CreatorFramework-ai`，本仓库不重复备份。
+> **项目级配置不在本仓库**：`CreatorFramework` 项目根的 `.claude/` 以及 `CLAUDE.md` / `AGENTS.md` / `.mcp.json` / `agent-tools/` / `.cursor/rules/` / `docs/superpowers/` 等被 `.git/info/exclude` 本地排除的 AI 工作流文件，由 **aigit** 工具统一同步到独立私人 remote `git@github.com:Trendymen/CreatorFramework-ai.git`。本仓库只放真正跨项目的全局配置。
 
 ## 在新机器上还原
 
