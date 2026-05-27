@@ -114,11 +114,5 @@
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-daltonized",
   "skipAutoPermissionPrompt": true,
-  "smallFastModel": "sonnet[1m]",
-  "mcpServers": {
-    "vscode-mcp-server": {
-      "type": "http",
-      "url": "http://127.0.0.1:3000/mcp"
-    }
-  }
+  "smallFastModel": "sonnet[1m]"
 }
