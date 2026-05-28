@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# DEPRECATED: 该 Stop hook 当前未挂载到 ~/.claude/settings.json，仅保留为历史实验脚本。
 # stop-detect-text-question.sh
 #
 # Stop hook：AI 结束回复时，扫描最后一条 assistant 消息文本，

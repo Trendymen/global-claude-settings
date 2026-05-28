@@ -20,13 +20,10 @@ if [ "$QUESTIONS" = "[]" ] || [ -z "$QUESTIONS" ]; then
   exit 0
 fi
 
-WARNINGS=()
-
 # 遍历每道题
 echo "$QUESTIONS" | jq -c '.[]' | while IFS= read -r Q; do
   Q_TEXT=$(echo "$Q" | jq -r '.question // ""' | head -c 40)
   MULTI=$(echo "$Q" | jq -r '.multiSelect // false')
-  OPT_COUNT=$(echo "$Q" | jq -r '.options | length')
   FIRST_LABEL=$(echo "$Q" | jq -r '.options[0].label // ""')
 
   # 检查1：单选题首项推荐标记

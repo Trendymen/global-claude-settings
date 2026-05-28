@@ -30,10 +30,10 @@ COMMON="[Superpowers 硬性提醒｜${EVENT}] ① 任何 2-4 选项决策必须�
 # 按 skill 分流的针对性硬约束
 case "$SHORT" in
   brainstorming)
-    SPECIFIC="【brainstorming】禁止纯文本『OK 吗？』『可以吗？』收尾段落确认。每段段落确认必须走 AskUserQuestion 4 选项：通过继续/X 部分要改/Y 部分要改/整段重做。多方案对比阶段必须并行派发 2-3 个 Plan agent 生成独立方案，禁止串行思考三个方案。"
+    SPECIFIC="【brainstorming】禁止纯文本『OK 吗？』『可以吗？』收尾段落确认。每段段落确认必须走 AskUserQuestion 4 选项：通过继续/X 部分要改/Y 部分要改/整段重做。多方案对比阶段必须用 Agent 或 TeamCreate 并行派发 2-3 个独立方案，禁止串行思考三个方案。"
     ;;
   writing-plans)
-    SPECIFIC="【writing-plans】多实现路径必须并行派发 Plan agent 出 2-3 个方案 → 横向对比表 → AskUserQuestion 让用户选。Plan 模式下『方案是否通过』必须走 ExitPlanMode，禁用 AskUserQuestion 问审批。"
+    SPECIFIC="【writing-plans】多实现路径必须用 Agent 或 TeamCreate 并行派发 2-3 个方案 → 横向对比表 → AskUserQuestion 让用户选。Plan 模式下『方案是否通过』必须走 ExitPlanMode，禁用 AskUserQuestion 问审批。"
     ;;
   executing-plans)
     SPECIFIC="【executing-plans】CLAUDE.md 第 11 节豁免：禁止『必须 worktree』『先 using-git-worktrees』要求，默认当前工作区改代码；只保留计划审阅 + 逐步执行 + 验证收尾约束。除非用户当前对话明确点名补测试，禁止主动新增/修改/运行程序化测试。"
