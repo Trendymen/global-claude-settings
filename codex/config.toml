@@ -31,7 +31,7 @@ hooks = true
 [[hooks.SessionStart]]
 [[hooks.SessionStart.hooks]]
 type = "command"
-command = "/Users/liuzhuo/.codex/hooks/session-zh-reminder.sh"
+command = "/Users/liuzhuo/.codex/hooks/session-zh-reminder.mjs"
 async = false
 timeoutSec = 5
 statusMessage = "注入中文 JSON 提醒"
@@ -54,11 +54,29 @@ async = false
 timeoutSec = 5
 statusMessage = "检查脚本语言偏好"
 
+[[hooks.PreToolUse]]
+matcher = "^(request_user_input|functions\\.request_user_input)$"
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "/Users/liuzhuo/.codex/hooks/ask-user-question-validator.mjs"
+async = false
+timeoutSec = 5
+statusMessage = "检查结构化提问质量"
+
+[[hooks.PreToolUse]]
+matcher = "^(request_user_input|functions\\.request_user_input|update_plan|functions\\.update_plan)$"
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "/Users/liuzhuo/.codex/hooks/zh-typo-guard.mjs"
+async = false
+timeoutSec = 5
+statusMessage = "检查中文错字"
+
 [[hooks.PostToolUse]]
 matcher = "^(apply_patch|create_file_code|replace_lines_code|copy_file_code|move_file_code|rename_file_code|mcp__vscode_mcp_server__create_file_code|mcp__vscode_mcp_server__replace_lines_code|mcp__vscode_mcp_server__copy_file_code|mcp__vscode_mcp_server__move_file_code|mcp__vscode_mcp_server__rename_file_code)$"
 [[hooks.PostToolUse.hooks]]
 type = "command"
-command = "/Users/liuzhuo/.codex/hooks/diagnostics-reminder.sh"
+command = "/Users/liuzhuo/.codex/hooks/diagnostics-reminder.mjs"
 async = false
 timeoutSec = 5
 statusMessage = "提醒 diagnostics 检查"

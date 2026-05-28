@@ -37,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/diagnostics-reminder.sh"
+            "command": "~/.claude/hooks/diagnostics-reminder.mjs"
           }
         ]
       },
@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/superpowers-skill-reminder.sh PostToolUse"
+            "command": "~/.claude/hooks/superpowers-skill-reminder.mjs PostToolUse"
           }
         ]
       }
@@ -56,7 +56,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/session-zh-reminder.sh"
+            "command": "~/.claude/hooks/session-zh-reminder.mjs"
           }
         ]
       }
@@ -67,7 +67,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/superpowers-skill-reminder.sh PreToolUse"
+            "command": "~/.claude/hooks/superpowers-skill-reminder.mjs PreToolUse"
           }
         ]
       },
@@ -76,7 +76,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/ask-user-question-validator.sh"
+            "command": "~/.claude/hooks/ask-user-question-validator.mjs"
           }
         ]
       },
@@ -94,7 +94,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/prefer-node-script.sh"
+            "command": "~/.claude/hooks/prefer-node-script.mjs"
           }
         ]
       },
@@ -103,7 +103,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/prefer-node-script.sh"
+            "command": "~/.claude/hooks/prefer-node-script.mjs"
           }
         ]
       }
