@@ -17,8 +17,8 @@
         "installPath": "/Users/liuzhuo/.claude/plugins/cache/claude-plugins-official/context7/unknown",
         "version": "unknown",
         "installedAt": "2026-03-19T10:09:11.425Z",
-        "lastUpdated": "2026-05-25T07:48:11.114Z",
-        "gitCommitSha": "1b527e2ee74e6dbd198e22cd41701c3b6f47dfec"
+        "lastUpdated": "2026-05-27T01:49:54.733Z",
+        "gitCommitSha": "a8f5f1b3c940d98694ac74032d7de55439c8394b"
       }
     ],
     "frontend-design@claude-plugins-official": [
@@ -27,8 +27,8 @@
         "installPath": "/Users/liuzhuo/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown",
         "version": "unknown",
         "installedAt": "2026-04-01T03:07:13.785Z",
-        "lastUpdated": "2026-05-25T07:48:11.114Z",
-        "gitCommitSha": "1b527e2ee74e6dbd198e22cd41701c3b6f47dfec"
+        "lastUpdated": "2026-05-27T01:49:54.734Z",
+        "gitCommitSha": "a8f5f1b3c940d98694ac74032d7de55439c8394b"
       }
     ],
     "code-review@claude-plugins-official": [
@@ -37,8 +37,8 @@
         "installPath": "/Users/liuzhuo/.claude/plugins/cache/claude-plugins-official/code-review/unknown",
         "version": "unknown",
         "installedAt": "2026-04-01T03:07:25.595Z",
-        "lastUpdated": "2026-05-25T07:48:11.113Z",
-        "gitCommitSha": "1b527e2ee74e6dbd198e22cd41701c3b6f47dfec"
+        "lastUpdated": "2026-05-27T01:49:54.734Z",
+        "gitCommitSha": "a8f5f1b3c940d98694ac74032d7de55439c8394b"
       }
     ]
   }

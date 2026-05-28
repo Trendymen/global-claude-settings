@@ -1,0 +1,10 @@
+{
+  "name": "global-ai-settings",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "restore": "node install.mjs",
+    "pull": "node install.mjs --pull-from-home",
+    "check": "node --check install.mjs && node --check src/install.mjs"
+  }
+}

@@ -51,6 +51,16 @@
         ]
       }
     ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/session-zh-reminder.sh"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Skill",
@@ -67,6 +77,15 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/ask-user-question-validator.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "AskUserQuestion|TaskCreate|TaskUpdate",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/zh-typo-guard.mjs"
           }
         ]
       },
@@ -88,16 +107,6 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/stop-detect-text-question.sh"
-          }
-        ]
-      }
     ]
   },
   "statusLine": {
@@ -111,8 +120,9 @@
     "code-review@claude-plugins-official": true
   },
   "effortLevel": "xhigh",
+  "tui": "default",
   "skipDangerousModePermissionPrompt": true,
-  "theme": "dark-daltonized",
+  "theme": "custom:dark-daltonized-user-bg-fix",
   "skipAutoPermissionPrompt": true,
   "smallFastModel": "sonnet[1m]"
 }

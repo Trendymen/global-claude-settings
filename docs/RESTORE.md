@@ -1,14 +1,14 @@
-# 在新机器上还原 Claude Code 全局配置
+# 在新机器上还原 Claude Code / Codex 全局规则配置
 
 ## 前置依赖
 
 | 工具 | 用途 | 安装 |
 |------|------|------|
 | Claude Code | 主程序 | `npm i -g @anthropic-ai/claude-code`（或参考官方文档） |
-| `node` | 跑 hook 脚本里的 node 命令 | brew install node |
-| `jq` | 解析 / 合并 JSON | brew install jq |
+| Codex | 主程序 | 按当前平台安装 Codex |
+| `node` | 运行跨平台恢复脚本与 Node hooks | macOS: `brew install node`；Windows: 安装 Node.js LTS |
 | `gh` | 拉私有仓库用（可选） | brew install gh |
-| `git` | 必备 | macOS 自带 |
+| `git` | 必备 | macOS 自带；Windows 建议安装 Git for Windows |
 
 可选（hooks / skills 用到的）：
 - `rg`、`fd`、`bat`、`eza`：CLAUDE.md 里推荐的现代化命令行工具
@@ -25,19 +25,28 @@ git clone git@github.com:Trendymen/global-claude-settings.git ~/.claude/global-c
 
 ```bash
 cd ~/.claude/global-claude-settings
+node install.mjs
+
+# 或使用 npm script：
+npm run restore
+
+# macOS / Linux 也可以：
 bash install.sh
+
+# Windows PowerShell 也可以：
+pwsh ./install.ps1
 ```
 
-`install.sh` 做的事：
+`install.mjs` 做的事：
 1. 创建 `~/.claude/` 下所有需要的子目录
-2. 把 `dotclaude/` 里的文件复制到 `~/.claude/` 对应位置（已存在的文件先备份成 `*.before-restore-<时间戳>`）
-3. 把 `mcp-user-scope.json` 里的 `mcpServers` 合并进 `~/.claude.json`（不覆盖其他字段）
-4. 给 `hooks/` 下所有 `.sh` 加可执行权限
-5. 打印插件清单，提示用 Claude Code 内的 `/plugin install` 命令安装
+2. 把 `claude/` 里的文件复制到 `~/.claude/` 对应位置（已存在的文件先备份成 `*.before-restore-<时间戳>`）
+3. 把 `claude/mcp-user-scope.json` 里的 `mcpServers` 合并进 `~/.claude.json`（不覆盖其他字段）
+4. 把 `codex/` 里的规则、配置和 hooks 复制到 `~/.codex/`；恢复 `config.toml` 时会把原机器 home 路径替换成当前机器 home 路径
+5. 跳过 `*.bak-*` 这类 hook 备份文件
 
 ## 步骤三：安装插件
 
-`install.sh` 不会自动装插件（避免在还没启动 Claude Code 的环境里乱拉 marketplace），需要手动执行：
+`install.mjs` 不会自动装插件（避免在还没启动 Claude Code 的环境里乱拉 marketplace），需要手动执行：
 
 ```bash
 # 进入 Claude Code 后执行
@@ -48,7 +57,7 @@ bash install.sh
 /plugin install code-review@claude-plugins-official
 ```
 
-清单参考 `dotclaude/plugins/installed_plugins.json`。
+清单参考 `claude/plugins/installed_plugins.json`。
 
 ## 步骤四：shell 集成（可选）
 
@@ -73,6 +82,10 @@ claude --version
 
 # 4. 检查 mcp servers
 claude mcp list
+
+# 5. 检查 Codex 全局规则和配置文件
+test -f ~/.codex/AGENTS.md && sed -n '1,40p' ~/.codex/AGENTS.md
+test -f ~/.codex/config.toml && sed -n '1,40p' ~/.codex/config.toml
 ```
 
 ## 关于 vscode-mcp-server
@@ -97,14 +110,15 @@ git --git-dir=~/.ai-configs/CreatorFramework-ai.git --work-tree="$PROJECT_DIR" c
 
 注：`agent-tools/aigit.js` 由 aigit 自己追踪，checkout 后即可用 `node agent-tools/aigit.js status` 验证。
 
-## 同步回仓库（修改了 ~/.claude 之后）
+## 同步回仓库（修改了 ~/.claude 或被备份的 ~/.codex 文件之后）
 
 ```bash
 cd ~/.claude/global-claude-settings
-bash install.sh --pull-from-home
+node install.mjs --pull-from-home
+# 或：npm run pull
 git add -A
 git diff --cached
-git commit -m "chore: sync from ~/.claude"
+git commit -m "chore: 同步全局 AI 规则"
 git push
 ```
 
@@ -112,7 +126,7 @@ git push
 
 | 现象 | 原因 / 处理 |
 |------|------|
-| hook 没触发 | 检查 `chmod +x ~/.claude/hooks/*.sh`；查看 `settings.json` 中 hooks 字段路径 |
+| hook 没触发 | 检查 `settings.json` / `config.toml` 中 hooks 字段路径；Windows 下 shell hook 需要 Git Bash 或改成 Node hook |
 | MCP 连不上 | 看 `claude mcp list` 状态；本仓库只备份用户 scope，项目 scope 的 MCP（如 ben-cocos-mcp）由各项目自己维护 |
 | 插件命令不识别 | `enabledPlugins` 需要 marketplace 已经 add + plugin 已经 install；可重新 `/plugin install` |
-| 文件没被覆盖 | install.sh 默认会把已有文件备份成 `*.before-restore-*` 然后覆盖；如想保留旧文件改用 `bash install.sh --no-overwrite` |
+| 文件没被覆盖 | `install.mjs` 默认会把已有文件备份成 `*.before-restore-*` 然后覆盖；如想保留旧文件改用 `node install.mjs --no-overwrite` |

@@ -1,0 +1,269 @@
+approval_policy = "never"
+#model_provider = "local"
+# 主力：GPT-5.5，负责实现、重构、排错、review
+model = "gpt-5.5"
+#model_context_window = 400000
+#model_auto_compact_token_limit = 320000 # 如果你那边还显示258k，就先保守点
+model_reasoning_effort = "xhigh"
+sandbox_mode = "danger-full-access"
+
+# 大上下文：GPT-5.4，负责全仓理解、找文件、画架构、生成计划
+#model = "gpt-5.4"
+model_context_window = 1000000
+model_auto_compact_token_limit = 850000
+
+notify = ["/Users/liuzhuo/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+
+[model_providers.local]
+name = "local"
+base_url = "http://172.20.156.12:9695/v1"
+wire_api = "responses"
+supports_websockets = true
+
+
+
+[features]
+multi_agent = true
+js_repl = false
+memories = true
+hooks = true
+
+[[hooks.SessionStart]]
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "/Users/liuzhuo/.codex/hooks/session-zh-reminder.sh"
+async = false
+timeoutSec = 5
+statusMessage = "注入中文 JSON 提醒"
+
+[[hooks.UserPromptSubmit]]
+matcher = ".*"
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "/Users/liuzhuo/.codex/hooks/superpowers-reminder.mjs"
+async = false
+timeoutSec = 5
+statusMessage = "检查 Superpowers 提醒"
+
+[[hooks.PreToolUse]]
+matcher = ".*"
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "/Users/liuzhuo/.codex/hooks/prefer-node-script.mjs"
+async = false
+timeoutSec = 5
+statusMessage = "检查脚本语言偏好"
+
+[[hooks.PostToolUse]]
+matcher = "^(apply_patch|create_file_code|replace_lines_code|copy_file_code|move_file_code|rename_file_code|mcp__vscode_mcp_server__create_file_code|mcp__vscode_mcp_server__replace_lines_code|mcp__vscode_mcp_server__copy_file_code|mcp__vscode_mcp_server__move_file_code|mcp__vscode_mcp_server__rename_file_code)$"
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "/Users/liuzhuo/.codex/hooks/diagnostics-reminder.sh"
+async = false
+timeoutSec = 5
+statusMessage = "提醒 diagnostics 检查"
+
+[hooks.state]
+
+[hooks.state."/Users/liuzhuo/.codex/config.toml:pre_tool_use:0:0"]
+trusted_hash = "sha256:eda0bb0e53255685a8c709af9fafe083d9b8e5b2204479d8e6c89f400035cd47"
+
+[hooks.state."/Users/liuzhuo/.codex/config.toml:post_tool_use:0:0"]
+trusted_hash = "sha256:1d15a59ed02a2d132b5758161a11cab23969d04e10fc98d3086f88f1ee56d694"
+
+[hooks.state."/Users/liuzhuo/.codex/config.toml:session_start:0:0"]
+trusted_hash = "sha256:43c0b53fab052e16960cb234a95d453fe6b32a1dfab09dc2b720d1f148d3fdcb"
+
+[hooks.state."/Users/liuzhuo/.codex/config.toml:user_prompt_submit:0:0"]
+trusted_hash = "sha256:7cc1871051b64fdcf9cc6e5b18d2a0feac4f6b9a03ec3f5de7e1dd0697cb6f5b"
+
+[hooks.state."/Users/liuzhuo/webstorm_project/company-projects/CreatorFramework/.codex/config.toml:pre_tool_use:0:0"]
+trusted_hash = "sha256:010f9b4795963bd6cd120504b33b9829432d91264574799b3b5c86e7e0ccf7cd"
+
+[hooks.state."/Users/liuzhuo/webstorm_project/company-projects/CreatorFramework/.codex/config.toml:user_prompt_submit:0:0"]
+trusted_hash = "sha256:1b3724268806bae9ba5661d925b6716cfe41173ee20bae9008f49e00425192a5"
+
+[mcp_servers.ben-cocos-mcp]
+enabled = true
+url = "http://127.0.0.1:3334/mcp"
+
+[mcp_servers.cocos-mcp-server]
+enabled = false
+url = "http://127.0.0.1:3666/mcp"
+
+[mcp_servers."chrome-devtools"]
+args = [
+    "-y",
+    "chrome-devtools-mcp@latest",
+    "--autoConnect",
+    "--no-usage-statistics",
+]
+command = "npx"
+
+[mcp_servers."chrome-devtools".tools.new_page]
+approval_mode = "approve"
+
+[mcp_servers."chrome-devtools".tools.take_snapshot]
+approval_mode = "approve"
+
+[mcp_servers.playwright]
+args = ["@playwright/mcp@latest"]
+command = "npx"
+enabled = true
+
+[mcp_servers.vscode_mcp_server]
+enabled = true
+url = "http://127.0.0.1:3000/mcp"
+
+[mcp_servers.vscode_mcp_server.tools.get_diagnostics_code]
+approval_mode = "approve"
+
+[mcp_servers.vscode_mcp_server.tools.read_file_code]
+approval_mode = "approve"
+
+[mcp_servers.vscode_mcp_server.tools.search_symbols_code]
+approval_mode = "approve"
+
+[mcp_servers.vscode_mcp_server.tools.list_files_code]
+approval_mode = "approve"
+
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/Codex.app/Contents/Resources/node_repl"
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = ""
+NODE_REPL_NODE_PATH = "/Applications/Codex.app/Contents/Resources/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "/Users/liuzhuo/.codex"
+CODEX_HOME = "/Users/liuzhuo/.codex"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "496c7b3cb95b4bc20cff49b513150606e0da0000c92bf752206bee5a6c248423"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+BROWSER_USE_MARKETPLACE_NAME = "openai-bundled"
+NODE_REPL_UNTRUSTED_ENV_ALLOWLIST = "BROWSER_USE_MARKETPLACE_NAME"
+SKY_CUA_SERVICE_PATH = "/Users/liuzhuo/.codex/.tmp/bundled-marketplaces/openai-bundled/plugins/computer-use/Codex Computer Use.app"
+CODEX_CLI_PATH = "/Applications/Codex.app/Contents/Resources/codex"
+
+[projects."/Users/liuzhuo"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/webstorm_project/company-projects/CreatorFramework"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/webstorm_project/factory-plan"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/.codex"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-04-29/new-chat"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-05-21/mac-epub"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-05-21/claude-code-cli-react-jsx-react"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/claw"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-05-25/iframe-canvas-todataurl-canvas"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-05-26/claude-code-session"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-05-27/1111"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-05-27/1213"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-05-27/ghostty-claude-code-cli-tui-fullscreen"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-05-27/agents-md-claude-md-claude-md"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-05-28/claude-claude-settings-local-json-codex"]
+trust_level = "trusted"
+
+[projects."/Users/liuzhuo/Documents/Codex/2026-05-28/features-codex-hooks-is-deprecated-use"]
+trust_level = "trusted"
+
+[sandbox_workspace_write]
+network_access = true
+
+[shell_environment_policy]
+inherit = "core"
+
+[shell_environment_policy.set]
+CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"
+
+[marketplaces.openai-bundled]
+last_updated = "2026-05-28T06:53:01Z"
+source_type = "local"
+source = "/Users/liuzhuo/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.claude-plugins-official]
+last_updated = "2026-05-28T07:13:18Z"
+last_revision = "06b6d5b96fe846f05d79e2818501700a58aa49e5"
+source_type = "git"
+source = "https://github.com/anthropics/claude-plugins-official.git"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-05-27T01:54:09Z"
+source_type = "local"
+source = "/Users/liuzhuo/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."superpowers@openai-curated"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[desktop]
+sansFontSize = 13
+usePointerCursors = true
+dictationDictionary = []
+followUpQueueMode = "queue"
+preventSleepWhileRunning = true
+keepRemoteControlAwakeWhilePluggedIn = true
+conversationDetailMode = "STEPS_EXECUTION"
+
+[desktop.appearanceLightChromeTheme.fonts]
+code = "JetBrains Mono, Noto Sans Mono CJK Sc"
+
+
+
+[desktop.open-in-target-preferences]
+global = "vscode"
+
+[desktop.open-in-target-preferences.perPath]
+"/Users/liuzhuo/.codex" = "cursor"
+"/Users/liuzhuo/.codex/worktrees/31ca/CreatorFramework" = "vscode"
+"/Users/liuzhuo/webstorm_project/company-projects/CreatorFramework" = "vscode"
+
+[memories]
+generate_memories = true
+use_memories = true
+
+[tui]
+status_line = ["model-with-reasoning", "current-dir", "git-branch", "context-remaining", "five-hour-limit", "context-window-size"]
+
+[tui.model_availability_nux]
+"gpt-5.5" = 3

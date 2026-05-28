@@ -4,6 +4,15 @@
 
 永远使用中文简体回答。
 
+## 与 AGENTS.md 对齐原则
+
+- `~/.claude/CLAUDE.md` 是 Claude Code 侧全局规则；`~/.codex/AGENTS.md` 是 Codex 侧全局规则。
+- 两边共享的行为偏好保持一致，但工具名必须按平台改写，不要互相硬搬。
+- Claude 端规则里当前使用的 MCP / 工具名以 `claude mcp list` 与当前会话工具列表为准；规则中涉及浏览器、diagnostics 与 Cocos MCP 时统一写 `chrome-devtools`、`vscode-mcp-server`、`ben-cocos-mcp`。
+- Claude 专属项包括 `AskUserQuestion`、`TaskCreate` / `TaskUpdate`、`Agent`、`TeamCreate`、`Monitor`、`ScheduleWakeup`、Claude Code hooks。
+- Codex 对应迁移为 `request_user_input`（可用时）、`update_plan`、`spawn_agent` / `tool_search`、`exec_command` session + `write_stdin`、Codex lifecycle hooks。
+- 当规则需要同步时，先判断它是“行为偏好”还是“平台工具实现”；行为偏好两边同步，平台工具实现只写入对应平台文件。
+
 ## 大文件读取限制规则
 
 禁止直接读取超过 **2500 行**的代码文件（非代码的配置/JSON/文本类文件不限）。必须改用以下替代方式：
@@ -25,6 +34,52 @@
 1. **文件搜索优先使用内置 Glob 工具**，内容搜索优先使用内置 Grep 工具
 2. 必须通过 Bash 搜索时，可使用 `find` 标准语法或 `fd`（已安装的现代替代工具）
 3. 本机额外可用的现代工具：`fd`（find 替代）、`rg`（grep 替代）、`bat`（cat 替代）、`eza`（ls 替代）
+
+---
+
+## Claude Code 配置文件分工
+
+- `~/.claude/settings.json` 是 Claude Code 的用户级设置文件，用于 hooks、permissions、env、model、plugins、statusLine、theme 等行为配置。
+- `~/.claude.json` 是 Claude Code 的运行态/用户数据文件，同时也是 MCP `user` scope 与 MCP `local` scope 的存储位置；不要把普通 settings 配置迁进去。
+- 配置 MCP 时优先使用 `claude mcp add/get/list/remove`，不要手写 `~/.claude.json`，除非是在做明确的备份恢复或结构化迁移。
+- `~/.claude/settings.json` 不应存放 `mcpServers`；如果发现，应迁移到 `claude mcp add-json --scope user ...` 或合适的项目级 `.mcp.json`。
+- `.mcp.json` 是项目根目录的 `project` scope MCP 配置文件，用于团队共享；正常没有全局 `.mcp.json`。
+- MCP 调整后必须用 `claude mcp list` 或 `claude mcp get <name>` 验证实际生效来源和连接状态。
+
+---
+
+## 浏览器工具选择
+
+当存在浏览器相关 MCP 可用时，必须先根据任务类型选择工具，不要随意切换。Claude 全局当前配置了 `chrome-devtools`，未配置 `playwright` MCP；不要把未出现在当前会话工具列表里的浏览器 MCP 当作可用工具。
+
+### 默认优先级
+
+- 默认优先使用 `chrome-devtools` 处理当前默认用户目录浏览器里的页面和标签页。
+- 当前 Claude 全局没有安装 `playwright` MCP；需要隔离浏览器会话时，先确认当前会话是否实际提供 Playwright MCP/工具。
+- 如果当前会话没有 Playwright MCP/工具，公开网页抓取优先使用 Claude 内置 `WebFetch` / `WebSearch`，需要真实浏览器自动化时先说明工具缺失，再让用户决定是否安装或切换环境。
+- 只有当前已存在的浏览器 MCP 都明显无法完成任务时，才允许继续寻找其他替代方案。
+
+### 允许使用 Playwright MCP 的场景
+
+只有当前 Claude 会话明确提供 Playwright MCP/工具时，才允许在以下场景优先使用：
+
+- 需要全新、隔离的浏览器会话，避免污染当前浏览器状态。
+- 需要稳定执行可重复的自动化流程，且不依赖当前浏览器已有页面或登录态。
+- 需要批量表单测试、脚本化回归、独立打开页面并按固定步骤执行。
+- 需要以固定步骤反复访问页面、提取内容或执行自动化检查的任务。
+
+### 必须优先使用 `chrome-devtools` 的场景
+
+- 读取、分析、继续操作当前已经打开的浏览器页面或标签页。
+- 依赖当前浏览器登录态、Cookie、本地存储、已有会话的任务。
+- 用户明确提到“当前浏览器”“默认浏览器”“现有标签页”“我已经打开了页面”“默认用户目录”等场景。
+- 以人工浏览后的页面为基础继续提取内容、排查问题或复用现有上下文。
+
+### 回退规则
+
+- 当前用户浏览器上下文任务优先 `chrome-devtools`。
+- 只有当前会话实际提供 Playwright MCP/工具，且任务确实需要隔离会话时，才切到 Playwright。
+- 如果必须切换浏览器工具，先用一句话说明原因。
 
 ---
 
@@ -146,9 +201,11 @@
 
 ## 用户提问统一走 AskUserQuestion 规则
 
-**适用范围**：**所有 skill**（包括但不限于 superpowers 系列 `brainstorming` / `finishing-a-development-branch` / `receiving-code-review` / `requesting-code-review` / `writing-plans` 等；以及非 superpowers 的 `update-config` / `i18n-xlsx-export` / `frontend-design` / 任意项目级或自定义 skill）在执行过程中**需要向用户提问的环节**，以及**普通对话中**（未进入任何 skill 时）AI 自发面对 2-4 选项决策的场景。本规则**覆盖** skill 内部「用普通文本一次问一题」的默认描述（superpowers 自身已声明 CLAUDE.md > skill；非 superpowers skill 同理优先服从本规则）。
+**适用范围**：**仅限 superpowers 系列 skill**（`brainstorming` / `finishing-a-development-branch` / `receiving-code-review` / `requesting-code-review` / `writing-plans` 等）在执行过程中**需要向用户提问的环节**。本规则**覆盖** superpowers skill 内部「用普通文本一次问一题」的默认描述（superpowers 已声明 CLAUDE.md > skill）。
 
-> **注**：hook 层硬性提醒目前只覆盖 superpowers 系列 skill（`~/.claude/hooks/superpowers-skill-reminder.sh`）。非 superpowers skill 与普通对话依赖 CLAUDE.md 全局规则的 instruction following，没有 skill 调用瞬间的 system-reminder 注入。
+**非 superpowers skill 与普通对话**：AI 自发面对 2-4 选项决策时**不强制**使用 `AskUserQuestion`，由 AI 自行判断；用普通文本列出选项让用户文本回复完全可以接受。如果 AI 判断结构化选择题更合适（如分支多、互斥度高、用户偏好按钮点选），仍可主动使用 `AskUserQuestion`，但不会被 hook 或规则强制。
+
+> **注**：hook 层只在 superpowers skill 上下文里抓「纯文本 2-4 选项问句」（`~/.claude/hooks/superpowers-skill-reminder.sh` + `stop-detect-text-question.sh`）。非 superpowers 上下文没有强制提醒，依赖 AI 自身判断。
 
 ### 强制规则
 
@@ -256,6 +313,42 @@
 
 - 方案明显只有一条合理路径（如 bug 修复通常只有一种正确改法）
 - 用户已经指定了实现方向，只让你出细节
+
+---
+
+## CreatorFramework 项目级规则加载顺序（Claude Code）
+
+### 适用范围
+
+当当前工作目录属于 **CreatorFramework 项目**时，包括：
+
+- 主工作区：`/Users/liuzhuo/webstorm_project/company-projects/CreatorFramework`
+- 项目内 worktree：`/Users/liuzhuo/webstorm_project/company-projects/CreatorFramework/.worktrees/<任意名字>`
+- Codex 托管 worktree：`/Users/liuzhuo/.codex/worktrees/<任意哈希>/CreatorFramework`
+- 其他位置的 git worktree
+
+判定方法：在会话开始时跑 `git rev-parse --git-common-dir`，如果输出指向 `<...>/CreatorFramework/.git`，就视为当前会话在 CreatorFramework 项目里，本规则生效。
+
+### 加载顺序（从高到低）
+
+1. `<当前 worktree 根>/CLAUDE.local.md`：用户私人扩展规则，由 aigit 单独追踪，不入主仓库。必须主动读取；与团队规则冲突时以它为准。
+2. `<当前 worktree 根>/CLAUDE.md`：团队公共规范。在不与 `CLAUDE.local.md` 冲突时遵守。
+3. 如果当前 worktree 只有 `AGENTS.local.md` / `AGENTS.md`，也要主动读取对应文件作为镜像规则。
+4. 本文件其他段落：全局基线。
+
+当前 worktree 根通过 `git rev-parse --show-toplevel` 获取，不要写死主工作区路径。
+
+### 主动 Read 清单
+
+当判定当前会话在 CreatorFramework 项目里时，除读取 `CLAUDE.local.md` 外，还必须主动读取以下文件作为高优先级补充规则：
+
+1. `<当前 worktree 根>/.cursor/rules/cocos_creator.mdc`
+2. `<当前 worktree 根>/.cursor/rules/pre-commit-review.mdc`
+3. `<当前 worktree 根>/.cursor/rules/git-merge-to-develop.mdc`
+4. `<当前 worktree 根>/.cursor/rules/mcp-use.mdc`
+5. `<当前 worktree 根>/docs/ai/agent-reference.md`
+
+文件不存在时跳过，不报错。`CLAUDE.local.md` 与 `AGENTS.local.md` 内容互为镜像；改一处通常需要同步另一处。
 
 ---
 
