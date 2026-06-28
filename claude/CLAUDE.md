@@ -246,7 +246,7 @@
 
 ### 强制规则
 
-1. **进入 skill 立即建 TodoWrite**：识别到 skill 内部的 checklist/步骤列表，第一动作是 `TodoWrite`，每一项 checklist 对应一个 todo。**不允许心算走完**。
+1. **先给可见说明，再建 TodoWrite**：识别到 skill 内部的 checklist/步骤列表时，先用一句普通可见文本说明“正在进入哪个 skill / 为什么要建任务”，然后立即调用 `TodoWrite`，每一项 checklist 对应一个 todo。**不允许在没有可见说明的情况下静默建任务，也不允许心算走完**。
 2. **逐项实时更新**：完成一项立即标记 `completed`，正在做的标记 `in_progress`，**不允许批量更新**（一次只能有 1 个 in_progress）。
 3. **跳过项必须显式写明**：如果某 checklist 项在当前场景不适用，todo 仍要建，状态写 `cancelled` 并在 content 里标注原因，不能默默跳过。
 4. **stale 主动清理**：skill 完成或场景切换后，旧 todo 列表立即清理或归档，避免下一次 skill 看到污染状态。

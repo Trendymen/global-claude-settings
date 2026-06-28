@@ -31,7 +31,7 @@ const known = new Set([
 
 if (!known.has(short)) process.exit(0);
 
-const common = `[Superpowers 硬性提醒｜${event}] ① 任何 2-4 选项决策必须走 AskUserQuestion 工具，禁止纯文本提问，第一选项末尾加（推荐）；② skill 内部 checklist/步骤列表必须立即建 TaskCreate，每项一个 todo，逐项 in_progress→completed 实时更新（禁止心算/批量）。`;
+const common = `[Superpowers 硬性提醒｜${event}] ① 任何 2-4 选项决策必须走 AskUserQuestion 工具，禁止纯文本提问，第一选项末尾加（推荐）；② skill 内部 checklist/步骤列表必须先用一句普通可见文本说明正在进入哪个 skill/为什么建任务，然后立即建 TaskCreate，每项一个 todo，逐项 in_progress→completed 实时更新（禁止静默建任务/心算/批量）。`;
 
 const specifics = {
   'brainstorming': '【brainstorming】禁止纯文本『OK 吗？』『可以吗？』收尾段落确认。每段段落确认必须走 AskUserQuestion 4 选项：通过继续/X 部分要改/Y 部分要改/整段重做。多方案对比阶段必须并行派发 2-3 个 Plan agent 生成独立方案，禁止串行思考三个方案。',
