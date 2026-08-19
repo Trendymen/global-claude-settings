@@ -10,14 +10,6 @@
 # install.sh 备份产物（如果有人在仓库目录跑过 restore）
 *.before-restore-*
 
-# Hooks 旧备份
-dotclaude/hooks/*.bak-*
-
 # 临时文件
 *.tmp
 *.log
-
-# 反转全局 ~/.config/git/ignore 里的 `**/.claude/settings.local.json` 规则——
-# 本仓库专门做配置备份，settings.local.json 是必备文件
-!projects/**/.claude/settings.local.json
-!dotclaude/settings.local.json

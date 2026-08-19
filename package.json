@@ -5,6 +5,7 @@
   "scripts": {
     "restore": "node install.mjs",
     "pull": "node install.mjs --pull-from-home",
-    "check": "node --check install.mjs && node --check src/install.mjs"
+    "test": "node --test test/install.test.mjs",
+    "check": "node --check install.mjs && node --check src/install.mjs && node --check src/install-core.mjs && npm test"
   }
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Unix/macOS wrapper. The real restore implementation is cross-platform Node.
+# Codex 安装器的 Unix/macOS Node 入口包装器。
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

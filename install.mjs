@@ -1,2 +1,4 @@
 #!/usr/bin/env node
-import './src/install.mjs';
+import { runCli } from './src/install.mjs';
+
+process.exitCode = runCli();

@@ -1,132 +1,87 @@
-# 在新机器上还原 Claude Code / Codex 全局规则配置
+# Codex 配置恢复指南
 
-## 前置依赖
+本指南适用于 macOS 与 Windows。开始前安装 Node.js LTS、Git 和 Codex；Node 用于运行恢复器与 hook，Git 用于克隆仓库。
 
-| 工具 | 用途 | 安装 |
-|------|------|------|
-| Claude Code | 主程序 | `npm i -g @anthropic-ai/claude-code`（或参考官方文档） |
-| Codex | 主程序 | 按当前平台安装 Codex |
-| `node` | 运行跨平台恢复脚本与 Node hooks | macOS: `brew install node`；Windows: 安装 Node.js LTS |
-| `gh` | 拉私有仓库用（可选） | brew install gh |
-| `git` | 必备 | macOS 自带；Windows 建议安装 Git for Windows |
+恢复器只处理可移植的 `AGENTS.md`、`config.toml`、`agents/` 和 `hooks/`。它不会恢复认证、会话或其他运行时状态。
 
-可选（hooks / skills 用到的）：
-- `rg`、`fd`、`bat`、`eza`：CLAUDE.md 里推荐的现代化命令行工具
+## Windows PowerShell
 
-## 步骤一：克隆仓库
+```powershell
+git clone <仓库地址> "$HOME\codex-settings"
+Set-Location "$HOME\codex-settings"
 
-```bash
-git clone git@github.com:Trendymen/global-claude-settings.git ~/.claude/global-claude-settings
-```
-
-如果还没设置 ssh key，先用 https 克隆 + `gh auth login` 后改成 ssh remote。
-
-## 步骤二：一键还原
-
-```bash
-cd ~/.claude/global-claude-settings
+# 仅恢复通用 Codex 配置
 node install.mjs
-
-# 或使用 npm script：
-npm run restore
-
-# macOS / Linux 也可以：
-bash install.sh
-
-# Windows PowerShell 也可以：
-pwsh ./install.ps1
 ```
 
-`install.mjs` 做的事：
-1. 创建 `~/.claude/` 下所有需要的子目录
-2. 把 `claude/` 里的文件复制到 `~/.claude/` 对应位置（已存在的文件先备份成 `*.before-restore-<时间戳>`）
-3. 把 `claude/mcp-user-scope.json` 里的 `mcpServers` 合并进 `~/.claude.json`（不覆盖其他字段）
-4. 把 `codex/` 里的规则、配置和 hooks 复制到 `~/.codex/`；恢复 `config.toml` 时会把原机器 home 路径替换成当前机器 home 路径
-5. 跳过 `*.bak-*` 这类 hook 备份文件
+如已准备好 CreatorFramework，可同时写入其本机绝对路径：
 
-## 步骤三：安装插件
-
-`install.mjs` 不会自动装插件（避免在还没启动 Claude Code 的环境里乱拉 marketplace），需要手动执行：
-
-```bash
-# 进入 Claude Code 后执行
-/plugin marketplace add anthropics/claude-plugins-official
-/plugin install superpowers@claude-plugins-official
-/plugin install context7@claude-plugins-official
-/plugin install frontend-design@claude-plugins-official
-/plugin install code-review@claude-plugins-official
+```powershell
+node install.mjs --creatorframework-path 'D:\projects\CreatorFramework'
 ```
 
-清单参考 `claude/plugins/installed_plugins.json`。
+也接受 UNC 路径，例如：
 
-## 步骤四：shell 集成（可选）
-
-如果用 zsh，在 `~/.zshrc` 里追加：
-
-```bash
-[ -f ~/.claude/claude-mode.zsh ] && source ~/.claude/claude-mode.zsh
+```powershell
+node install.mjs --creatorframework-path '\\server\share\CreatorFramework'
 ```
 
-然后 `source ~/.zshrc`。
-
-`claude-mode.zsh` 由 `switch-claude.js` 维护，用 `node ~/.claude/switch-claude.js official` 可切换到官方模式，`proxy` 切到代理模式（如果有的话）。
-
-## 步骤五：验证
+## macOS shell
 
 ```bash
-# 1. 启动 Claude Code，检查是否加载了 CLAUDE.md
-claude --version
+git clone <仓库地址> "$HOME/codex-settings"
+cd "$HOME/codex-settings"
 
-# 2. 进入任意项目，新会话开头应能看到 superpowers skill 列表
-# 3. 触发 hook 测试：尝试编辑文件，Stop hook 应正常工作
-
-# 4. 检查 mcp servers
-claude mcp list
-
-# 5. 检查 Codex 全局规则和配置文件
-test -f ~/.codex/AGENTS.md && sed -n '1,40p' ~/.codex/AGENTS.md
-test -f ~/.codex/config.toml && sed -n '1,40p' ~/.codex/config.toml
+# 仅恢复通用 Codex 配置
+node install.mjs
 ```
 
-## 关于 vscode-mcp-server
-
-`settings.json` 引用了 `http://127.0.0.1:3000/mcp`，需要在 VS Code 装好对应扩展并启动监听端口才能工作；缺失时 Claude Code 会忽略并提示，不影响其他功能。
-
-## 项目级配置（不在本仓库）
-
-`CreatorFramework` 项目根的 `.claude/` 以及 `CLAUDE.md` / `AGENTS.md` / `.mcp.json` / `agent-tools/` / `.cursor/rules/` / `docs/superpowers/` 等被 `.git/info/exclude` 本地排除的 AI 工作流文件，**统一由 aigit 工具同步到独立私人 remote** `git@github.com:Trendymen/CreatorFramework-ai.git`。
-
-新机器上还原项目级配置：
+如已准备好 CreatorFramework，可传入 POSIX 绝对路径：
 
 ```bash
-# 1. 准备 aigit 裸仓库（克隆 CreatorFramework-ai 到 ~/.ai-configs 下）
-mkdir -p ~/.ai-configs
-git clone --bare git@github.com:Trendymen/CreatorFramework-ai.git ~/.ai-configs/CreatorFramework-ai.git
-
-# 2. 把 aigit 追踪的所有 AI 文件 checkout 到 CreatorFramework 工作区
-PROJECT_DIR=~/path/to/CreatorFramework
-git --git-dir=~/.ai-configs/CreatorFramework-ai.git --work-tree="$PROJECT_DIR" checkout -- .
+node install.mjs --creatorframework-path '/Users/你的用户名/projects/CreatorFramework'
 ```
 
-注：`agent-tools/aigit.js` 由 aigit 自己追踪，checkout 后即可用 `node agent-tools/aigit.js status` 验证。
+省略路径参数时，恢复器不会创建、删除或覆盖已有的 CreatorFramework 路径配置，因此不会启用该项目专属提醒。项目准备完成后，可重复运行带路径参数的命令以创建或更新配置。
 
-## 同步回仓库（修改了 ~/.claude 或被备份的 ~/.codex 文件之后）
+## 覆盖与预演
+
+默认恢复会先备份同名目标，再写入新的可移植内容。可用以下选项调整行为：
 
 ```bash
-cd ~/.claude/global-claude-settings
+# 仅打印计划，不写入或备份
+node install.mjs --dry-run
+
+# 保留已有目标，跳过同名文件或目录
+node install.mjs --no-overwrite
+```
+
+## 从本机同步回仓库
+
+确认本机配置需要保存后，在仓库根目录运行：
+
+```bash
 node install.mjs --pull-from-home
-# 或：npm run pull
 git add -A
 git diff --cached
-git commit -m "chore: 同步全局 AI 规则"
+git commit -m "chore: 同步 Codex 全局配置"
 git push
 ```
 
-## 排查
+同步只取回可移植的 `AGENTS.md`、`agents/` 和 `hooks/`；不会取回本机路径配置或运行时状态。`--pull-from-home` 不能与 `--creatorframework-path` 同时使用。
 
-| 现象 | 原因 / 处理 |
-|------|------|
-| hook 没触发 | 检查 `settings.json` / `config.toml` 中 hooks 字段路径；Windows 下 shell hook 需要 Git Bash 或改成 Node hook |
-| MCP 连不上 | 看 `claude mcp list` 状态；本仓库只备份用户 scope，项目 scope 的 MCP（如 ben-cocos-mcp）由各项目自己维护 |
-| 插件命令不识别 | `enabledPlugins` 需要 marketplace 已经 add + plugin 已经 install；可重新 `/plugin install` |
-| 文件没被覆盖 | `install.mjs` 默认会把已有文件备份成 `*.before-restore-*` 然后覆盖；如想保留旧文件改用 `node install.mjs --no-overwrite` |
+## 登录、重启与验证
+
+恢复之后，请独立完成 Codex 登录，并完全退出后重新启动 Codex，再执行：
+
+```bash
+codex --version
+codex mcp list
+npm run check
+```
+
+`npm run check` 仅覆盖静态语法和自动化测试，不代表真实 Windows 运行时已经验收。
+
+## Pending：Windows 实机验收
+
+仍需在真实 Windows 环境中完成以下验收：恢复配置、独立登录并重启 Codex、运行 `codex mcp list`，以及在已配置 CreatorFramework 工作区触发三个专属 hook。完成前，不能以自动化测试或模拟 Windows 结果替代这些运行时检查。

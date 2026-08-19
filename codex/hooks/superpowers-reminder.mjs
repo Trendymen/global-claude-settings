@@ -1,25 +1,22 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-let input;
-try {
-  input = JSON.parse(readFileSync(0, 'utf8'));
-} catch {
-  process.exit(0);
+export function buildReminder(_input) {
+  return [
+    '[Superpowers 入口提醒]',
+    '每个新用户请求先做 skill 匹配；仅在相关 skill 适用时调用它。',
+    '涉及新增功能、组件、能力或行为变更时，先调用 brainstorming，并在实施前分类为 Spike、Bounded、Architectural 且完成对应批准门。',
+    '普通问答、状态汇报、只读调查不进入 brainstorming；排障先走 systematic-debugging。',
+    'Spike 只产出可行性结论；Bounded 经短设计批准后直接实现；Architectural 经 Spec 批准后才进入 writing-plans。',
+  ].join(' ');
 }
 
-const text = JSON.stringify(input);
-if (!/(superpowers:|using-superpowers|brainstorming|writing-plans|executing-plans|verification-before-completion|subagent-driven-development|systematic-debugging|requesting-code-review|receiving-code-review|finishing-a-development-branch)/i.test(text)) {
-  process.exit(0);
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  try {
+    const input = JSON.parse(readFileSync(0, 'utf8') || '{}');
+    process.stdout.write(JSON.stringify({ systemMessage: buildReminder(input) }));
+  } catch {
+    // Hook 输入异常时静默退出，不能阻断正常工具调用。
+  }
 }
-
-const msg = [
-  '[Superpowers 提醒]',
-  '1. 使用 superpowers skill 时，先读对应 SKILL.md，再按 checklist 建 update_plan 并逐项更新。',
-  '2. brainstorming / writing-plans 的多方案阶段，如有真实多路径，优先并行生成 2-3 个候选方案；没有可用 subagent 时由主线程给出简明方案与推荐。',
-  '3. Claude 的 AskUserQuestion 在 Codex 中迁移为 request_user_input；superpowers 场景一旦判断需要结构化提问，就直接调用 request_user_input，不要先用普通文本试探。',
-  '4. request_user_input 不可用时才用一个必要的简短文本问题兜底；能合理假设继续时直接执行。',
-  '5. executing-plans 默认不强制创建/切换 worktree，除非用户明确要求或当前任务确实只能隔离完成。',
-].join(' ');
-
-process.stdout.write(JSON.stringify({ systemMessage: msg }));
