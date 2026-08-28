@@ -1,0 +1,73 @@
+name: restore-windows
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  restore:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check scripts
+        run: |
+          npm run check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Restore (default)
+        env:
+          FAKE_HOME: ${{ github.workspace }}\fake-home
+        run: |
+          $env:USERPROFILE = $env:FAKE_HOME
+          New-Item -ItemType Directory -Force -Path $env:FAKE_HOME | Out-Null
+          node install.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:CODEX_HOME = "$env:FAKE_HOME\.codex"
+          node scripts/verify-restore.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Restore (creatorframework-path, backup path)
+        env:
+          FAKE_HOME: ${{ github.workspace }}\fake-home-cf
+        run: |
+          $env:USERPROFILE = $env:FAKE_HOME
+          New-Item -ItemType Directory -Force -Path "$env:FAKE_HOME\.codex\hooks" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$env:FAKE_HOME\.codex\agents" | Out-Null
+          Set-Content -Path "$env:FAKE_HOME\.codex\AGENTS.md" -Value 'old agents'
+          Set-Content -Path "$env:FAKE_HOME\.codex\hooks\local-only.mjs" -Value 'local-only'
+          node install.mjs --creatorframework-path "$env:GITHUB_WORKSPACE\CreatorFramework"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:CODEX_HOME = "$env:FAKE_HOME\.codex"
+          $env:VERIFY_CREATORFRAMEWORK_ROOT = "$env:GITHUB_WORKSPACE\CreatorFramework"
+          $env:VERIFY_EXPECT_BACKUP = '1'
+          node scripts/verify-restore.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Wrapper smoke (install.ps1 --help)
+        run: |
+          ./install.ps1 --help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Pull dry-run (plan computed, repo clean)
+        env:
+          FAKE_HOME: ${{ github.workspace }}\fake-home-cf
+        run: |
+          $env:USERPROFILE = $env:FAKE_HOME
+          node install.mjs --pull-from-home --dry-run > dry-run.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $planHasWrites = Select-String -Path dry-run.log -Pattern '\[dry-run\] write' -Quiet
+          if (-not $planHasWrites) { Get-Content dry-run.log; Write-Error 'dry-run 计划中缺少 write 动作'; exit 1 }
+          $status = git status --porcelain
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($status) { Write-Output $status; Write-Error 'repo polluted by pull dry-run'; exit 1 }

@@ -1,0 +1,58 @@
+name: restore-macos
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  restore:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check scripts
+        run: |
+          npm run check
+
+      - name: Restore (default)
+        env:
+          FAKE_HOME: ${{ github.workspace }}/fake-home
+        run: |
+          mkdir -p "$FAKE_HOME"
+          HOME="$FAKE_HOME" node install.mjs
+          CODEX_HOME="$FAKE_HOME/.codex" node scripts/verify-restore.mjs
+
+      - name: Restore (creatorframework-path, backup path)
+        env:
+          FAKE_HOME: ${{ github.workspace }}/fake-home-cf
+        run: |
+          mkdir -p "$FAKE_HOME/.codex/hooks" "$FAKE_HOME/.codex/agents"
+          printf 'old agents' > "$FAKE_HOME/.codex/AGENTS.md"
+          printf 'local-only' > "$FAKE_HOME/.codex/hooks/local-only.mjs"
+          HOME="$FAKE_HOME" node install.mjs --creatorframework-path "$GITHUB_WORKSPACE/CreatorFramework"
+          CODEX_HOME="$FAKE_HOME/.codex" VERIFY_CREATORFRAMEWORK_ROOT="$GITHUB_WORKSPACE/CreatorFramework" VERIFY_EXPECT_BACKUP=1 node scripts/verify-restore.mjs
+
+      - name: Wrapper smoke (install.sh --help)
+        run: ./install.sh --help
+
+      - name: Pull dry-run (plan computed, repo clean)
+        env:
+          FAKE_HOME: ${{ github.workspace }}/fake-home-cf
+        run: |
+          HOME="$FAKE_HOME" node install.mjs --pull-from-home --dry-run > dry-run.log
+          if ! grep -q '\[dry-run\] write' dry-run.log; then
+            cat dry-run.log
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain)" ]; then
+            echo 'repo polluted by pull dry-run'
+            git status --porcelain
+            exit 1
+          fi
