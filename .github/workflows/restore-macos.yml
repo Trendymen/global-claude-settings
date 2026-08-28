@@ -23,7 +23,7 @@ jobs:
 
       - name: Restore (default)
         env:
-          FAKE_HOME: ${{ github.workspace }}/fake-home
+          FAKE_HOME: ${{ runner.temp }}/fake-home
         run: |
           mkdir -p "$FAKE_HOME"
           HOME="$FAKE_HOME" node install.mjs
@@ -31,7 +31,7 @@ jobs:
 
       - name: Restore (creatorframework-path, backup path)
         env:
-          FAKE_HOME: ${{ github.workspace }}/fake-home-cf
+          FAKE_HOME: ${{ runner.temp }}/fake-home-cf
         run: |
           mkdir -p "$FAKE_HOME/.codex/hooks" "$FAKE_HOME/.codex/agents"
           printf 'old agents' > "$FAKE_HOME/.codex/AGENTS.md"
@@ -44,7 +44,7 @@ jobs:
 
       - name: Pull dry-run (plan computed, repo clean)
         env:
-          FAKE_HOME: ${{ github.workspace }}/fake-home-cf
+          FAKE_HOME: ${{ runner.temp }}/fake-home-cf
         run: |
           HOME="$FAKE_HOME" node install.mjs --pull-from-home --dry-run > dry-run.log
           if ! grep -q '\[dry-run\] write' dry-run.log; then

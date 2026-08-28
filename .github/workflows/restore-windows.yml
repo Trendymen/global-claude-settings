@@ -27,7 +27,7 @@ jobs:
 
       - name: Restore (default)
         env:
-          FAKE_HOME: ${{ github.workspace }}\fake-home
+          FAKE_HOME: ${{ runner.temp }}\fake-home
         run: |
           $env:USERPROFILE = $env:FAKE_HOME
           New-Item -ItemType Directory -Force -Path $env:FAKE_HOME | Out-Null
@@ -39,7 +39,7 @@ jobs:
 
       - name: Restore (creatorframework-path, backup path)
         env:
-          FAKE_HOME: ${{ github.workspace }}\fake-home-cf
+          FAKE_HOME: ${{ runner.temp }}\fake-home-cf
         run: |
           $env:USERPROFILE = $env:FAKE_HOME
           New-Item -ItemType Directory -Force -Path "$env:FAKE_HOME\.codex\hooks" | Out-Null
@@ -61,7 +61,7 @@ jobs:
 
       - name: Pull dry-run (plan computed, repo clean)
         env:
-          FAKE_HOME: ${{ github.workspace }}\fake-home-cf
+          FAKE_HOME: ${{ runner.temp }}\fake-home-cf
         run: |
           $env:USERPROFILE = $env:FAKE_HOME
           node install.mjs --pull-from-home --dry-run > dry-run.log
