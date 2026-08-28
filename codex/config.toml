@@ -13,7 +13,6 @@ service_tier = "default"
 
 [model_providers.custom]
 name = "OpenAI"
-base_url = "http://127.0.0.1:10100/v1"
 wire_api = "responses"
 requires_openai_auth = true
 supports_websockets = true
