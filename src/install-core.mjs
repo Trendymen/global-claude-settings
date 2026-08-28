@@ -167,12 +167,12 @@ export function buildInstallIntent({ platform, homeDir, repoRoot, args }) {
   requireString(repoRoot, 'repoRoot');
   const normalizedHome = normalizeAbsolutePath(platform, homeDir, 'homeDir');
   const codexHome = targetPath(platform, normalizedHome, '.codex');
-  const sourceRoot = path.join(repoRoot, 'codex');
+  const sourceRoot = targetPath(platform, repoRoot, 'codex');
   const targetRoot = codexHome;
   const entries = (args.mode === 'pull' ? PULL_ENTRIES : RESTORE_ENTRIES).map((name) => ({
     name,
-    source: args.mode === 'pull' ? targetPath(platform, targetRoot, name) : path.join(sourceRoot, name),
-    target: args.mode === 'pull' ? path.join(sourceRoot, name) : targetPath(platform, targetRoot, name),
+    source: args.mode === 'pull' ? targetPath(platform, targetRoot, name) : targetPath(platform, sourceRoot, name),
+    target: args.mode === 'pull' ? targetPath(platform, sourceRoot, name) : targetPath(platform, targetRoot, name),
     template: name === 'config.toml',
   }));
 

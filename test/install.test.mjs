@@ -20,6 +20,14 @@ const FIXED_NOW = () => new Date('2026-08-19T00:00:00.000Z');
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGE_JSON_PATH = path.join(REPO_ROOT, 'package.json');
 
+const HOST = process.platform === 'win32' ? 'win32' : 'darwin';
+
+const SAMPLE_CF_ROOT = HOST === 'win32' ? 'C:/projects/CreatorFramework' : '/projects/CreatorFramework';
+const SAMPLE_CF_ROOT_NORMALIZED = HOST === 'win32'
+  ? path.win32.normalize(SAMPLE_CF_ROOT)
+  : path.posix.normalize(SAMPLE_CF_ROOT);
+const SAMPLE_CF_ROOT_JSON = JSON.stringify({ root: SAMPLE_CF_ROOT_NORMALIZED }, null, 2) + '\n';
+
 function writeCreatorFrameworkConfig(homeDir, root) {
   const configPath = path.join(homeDir, '.codex', 'creatorframework.json');
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
@@ -75,7 +83,7 @@ function withFixture(callback) {
 
 function install(context, argv = []) {
   return runInstall({
-    platform: 'darwin',
+    platform: HOST,
     argv,
     io: makeIo(),
     fs,
@@ -383,18 +391,18 @@ test('省略路径参数时不触碰已有 creatorframework.json', () => withFix
 }));
 
 test('传入有效路径时创建 CreatorFramework 路径文件', () => withFixture(({ repoRoot, homeDir, codexHome }) => {
-  install({ repoRoot, homeDir }, ['--creatorframework-path', '/projects/CreatorFramework']);
+  install({ repoRoot, homeDir }, ['--creatorframework-path', SAMPLE_CF_ROOT]);
 
   assert.equal(
     fs.readFileSync(path.join(codexHome, 'creatorframework.json'), 'utf8'),
-    '{\n  "root": "/projects/CreatorFramework"\n}\n',
+    SAMPLE_CF_ROOT_JSON,
   );
 }));
 
 test('dry-run 不产生文件变化', () => withFixture(({ repoRoot, homeDir, root }) => {
   const io = makeIo();
   const result = runInstall({
-    platform: 'darwin',
+    platform: HOST,
     homeDir,
     repoRoot,
     argv: ['--dry-run'],
@@ -558,8 +566,9 @@ test('配置的 CreatorFramework root 命中后保留 AGENTS 与 tscheck 提醒'
       input: JSON.stringify({ cwd }),
     });
     assert.equal(agentsResult.status, 0, agentsResult.stderr);
-    assert.match(agentsResult.stdout, /CreatorFramework AGENTS 提醒/);
-    assert.match(agentsResult.stdout, new RegExp(root.replaceAll('\\', '\\\\')));
+    const agentsOutput = JSON.parse(agentsResult.stdout);
+    assert.match(agentsOutput.systemMessage, /CreatorFramework AGENTS 提醒/);
+    assert.ok(agentsOutput.systemMessage.includes(root), agentsOutput.systemMessage);
 
     const tscheckResult = runHook('creatorframework-tscheck-reminder.mjs', {
       homeDir,
@@ -657,7 +666,7 @@ test('help 只允许单独使用，混合参数返回 usage error', () => {
     ['--help', '--unknown'],
     ['-h', '-h'],
     ['--help', '--pull-from-home'],
-    ['-h', '--creatorframework-path', '/projects/CreatorFramework'],
+    ['-h', '--creatorframework-path', SAMPLE_CF_ROOT],
   ]) {
     const io = makeIo();
     assert.equal(
