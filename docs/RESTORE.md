@@ -70,6 +70,14 @@ git push
 
 同步只取回可移植的 `AGENTS.md`、`agents/` 和 `hooks/`；不会取回本机路径配置或运行时状态。`--pull-from-home` 不能与 `--creatorframework-path` 同时使用。
 
+### config.toml 的同步方式
+
+`config.toml` 是手工维护的可移植模板，脚本刻意不覆盖它（机器路径与个性化默认值无法自动判断）。它的同步依靠人工或 AI 对照判断：
+
+1. 对照本机 `~/.codex/config.toml` 与仓库 `codex/config.toml`，按 [AGENTS.md](../AGENTS.md) 的「config.toml 同步判定」归类每处差异。
+2. 行为开关与 hooks 注册补进模板（路径写成 `{{CODEX_HOME}}` 占位符）；机器绑定内容留在本机，不入仓库。
+3. 完成后依次运行 TOML 解析检查、`npm run check` 与端到端恢复验证，推送后等待双平台 CI 全绿。
+
 ## 登录、重启与验证
 
 恢复之后，请独立完成 Codex 登录，并完全退出后重新启动 Codex，再执行：
