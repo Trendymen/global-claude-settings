@@ -23,8 +23,9 @@ if (!targets.has(toolName)) process.exit(0);
 let dict = {};
 try {
     const primary = join(homedir(), '.codex', 'zh-typos.json');
-    if (!existsSync(primary)) process.exit(0);
-    const parsed = JSON.parse(readFileSync(primary, 'utf-8'));
+    const fallback = join(homedir(), '.claude', 'zh-typos.json');
+    const path = existsSync(primary) ? primary : fallback;
+    const parsed = JSON.parse(readFileSync(path, 'utf-8'));
     dict = parsed.typos ?? {};
 } catch {
     process.exit(0);

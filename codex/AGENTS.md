@@ -4,6 +4,17 @@
 
 永远使用中文简体回答。
 
+## 与 CLAUDE.md 对齐原则
+
+- `~/.codex/AGENTS.md` 是 Codex 侧全局规则；`~/.claude/CLAUDE.md` 是 Claude Code 侧全局规则。
+- 两边共享的行为偏好保持一致，但工具名必须按平台运行时真实名称书写，不要互相硬搬。
+- Codex 端规则里当前使用的 MCP / 工具名以 `codex mcp list` 与当前会话工具列表为准；规则中涉及浏览器时统一写 `chrome-devtools`、`playwright`。
+- Claude 专属项包括 `AskUserQuestion`、`TaskCreate` / `TaskUpdate`、`Agent`、`TeamCreate`、`Monitor`、`ScheduleWakeup`、Claude Code hooks。
+- Codex 对应迁移为 `request_user_input`（可用时）、`update_plan`、`spawn_agent` / `tool_search`、`exec_command` session + `write_stdin`、Codex lifecycle hooks。
+- 当规则需要同步时，先判断它是“行为偏好”还是“平台工具实现”；行为偏好两边同步，平台工具实现只写入对应平台文件。
+
+（可移植说明：本节为跨平台同步约定，机器本位文件分别为 `~/.codex/AGENTS.md` 与 `~/.claude/CLAUDE.md`。）
+
 ## 主线程消息转发
 
 - 用户明确说“发消息给主线程”“转告主线程”或同义表达时，立即定位当前关联主任务，并使用 Codex 的 thread message 工具发送简洁、可执行的 follow-up；不得要求用户重复确认。
@@ -53,7 +64,6 @@
 ## Subagent 默认规则
 
 - 通过 `spawn_agent` 创建 subagent 时，模型和effort选择优先选择能够继承主会话上下文的方案。
-- 推理强度优先继承主会话当前设置，再按真实任务难度调整；不要无条件固定为最高档。
 - 首轮 code review、复杂架构判断、跨模块调研等高风险任务应使用较高推理强度；首轮 review 后已修复、只做再次复核的任务，或简单只读探索，可以适当降低。
 - 只有用户明确指定其他模型/推理强度，或当前工具能力不支持上述设置时，才允许偏离；如需偏离，先向用户说明原因。
 - 如果当前会话没有暴露 `spawn_agent`，先用 `tool_search` 查找多 agent 工具；仍不可用时，说明工具不可用，并用当前线程或 `multi_tool_use.parallel` 完成能并行的只读探索。
@@ -63,7 +73,7 @@
 - `~/.codex/agents/general.toml`：执行、根因判断和修复，固定 `gpt-5.6-terra` + `high`。
 - `~/.codex/agents/explorer.toml`：只读定位文件、符号和调用链，固定 `gpt-5.6-luna` + `max`。
 - `~/.codex/agents/reviewer.toml`：只读审查，不覆写模型或 effort，继承主线程；派发时不得携带完整主会话历史。
-- `~/.codex/agents/architect.toml`：只读候选方案探索，不覆写模型或 effort，继承主线程。
+- `~/.codex/agents/architect.toml`：Brainstorming 并行候选方案探索，不覆写模型或 effort，继承主线程；可执行一次性研究脚本，默认不实现功能、不写最终 Spec/Plan。
 - 已禁用插件内置的 `superpowers:requesting-code-review`。涉及实现 Task、重大功能或合并前审查时使用用户级 `$requesting-code-review` skill。
 
 ### 子代理上下文路由
@@ -187,16 +197,16 @@
 - 若这些内容已经在中间进度里说过，最终回复或等待用户输入前的可见回复必须用中文重新给出完整要点，不能只写“如上”“已在上面说明”。
 - 只有纯流程状态可以放在可折叠区域，例如正在读取哪个 skill、正在扫哪些文件、某个只读命令是否完成；任何会影响用户决策的内容都要在可见回复里重复。
 
-### Checklist / Todo
+### Checklist / Todo 迁移
 
-- 使用 `update_plan` 维护需要分步执行的任务清单。
+- Claude 的 `TodoWrite` / `TaskCreate` 规则在 Codex 中迁移为 `update_plan`。
 - 对 superpowers skill 中明确写有 checklist、step-by-step、或 “You MUST create a task for each” 的流程，进入后应建立 `update_plan` 清单。
 - 清单一次只保留一个 `in_progress`，完成一项及时更新，不要只在最后批量标记。
 - 不适用的步骤在说明里写清跳过原因。
 
-### 用户提问
+### 用户提问迁移
 
-- `request_user_input` 可用且场景适合时优先使用。
+- Claude 的 `AskUserQuestion` 规则在 Codex 中迁移为：`request_user_input` 可用且场景适合时优先使用。
 - 若 `request_user_input` 不可用，按当前 Codex 模式要求处理：能合理假设就继续推进；必须问时只问 1 个简短问题。
 - 不要为了模拟结构化按钮，在普通文本里写复杂多选题。
 - 真开放题、路径/URL/数字等具体值、贴日志等问题仍用普通文本。
@@ -219,9 +229,9 @@
 4. 如果长任务必须同步等结果，先确认这是用户当前需要的交互形态。
 5. 结束当前回复前，不要留下仍需本次任务处理的后台 session 无人跟进。
 
-## Codex Hook 规则
+## Codex Hook 迁移规则
 
-- Codex hook 的 payload 和输出字段以当前运行时文档为准。
+- Codex hook 与 Claude hook 的生命周期名称相近，但 payload 和输出字段不同；Claude hook 脚本不能直接复制使用。
 - Codex hooks 默认可用；若配置中显式声明，使用 `[features].hooks = true`，不要再使用废弃的 `codex_hooks`。
 - 优先把 hook 放在 `~/.codex/config.toml` 的 inline `[hooks]` 表，或放在 `~/.codex/hooks.json`；同一层不要两种形式混用。
 - Hook 输出优先使用 Codex 支持的 `systemMessage` 或 `hookSpecificOutput.additionalContext`。
@@ -235,7 +245,7 @@
 当当前工作目录属于 **CreatorFramework 项目**时，包括：
 
 - 主工作区：`<当前 CreatorFramework 根>`
-- 项目内 worktree：`<当前 CreatorFramework 根>/.worktrees/<名字>`
+- 项目内 worktree：`<当前 CreatorFramework 根>/.worktrees/<任意名字>`
 - Codex 托管 worktree：`<Codex worktree>/CreatorFramework`
 - 其他位置的 git worktree
 
@@ -253,6 +263,7 @@
 
 - 本规则只适用于 CreatorFramework 项目；其他项目目录不需要查找 `AGENTS.local.md`。
 - 如果当前 worktree 里 `AGENTS.local.md` 不存在，按团队 `AGENTS.md` + 本文件全局规则正常工作，不报错。
+- 本机可选：`CLAUDE.local.md` 与 `AGENTS.local.md` 内容互为镜像；改一处通常需要同步另一处（仅适用于同时使用两侧的机器）。
 
 ### 主动 Read 清单（弥补 Codex 不解析 inline @import）
 
