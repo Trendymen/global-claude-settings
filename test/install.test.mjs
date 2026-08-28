@@ -87,7 +87,7 @@ function install(context, argv = []) {
 test('包脚本提供稳定的检查与测试入口', () => {
   const pkg = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf8'));
 
-  assert.equal(pkg.scripts.test, 'node --test test/install.test.mjs');
+  assert.equal(pkg.scripts.test, 'node --test test/install.test.mjs codex/hooks/creatorframework-agents-reminder.test.mjs');
   assert.match(pkg.scripts.check, /node --check/);
   assert.match(pkg.scripts.check, /npm test/);
 });
