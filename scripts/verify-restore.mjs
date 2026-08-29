@@ -43,6 +43,13 @@ function readCreatorFrameworkRoot() {
   return path.resolve(raw);
 }
 
+function readHomeDir() {
+  const value = process.env.VERIFY_HOME;
+  if (!value) return undefined;
+  if (!path.isAbsolute(value)) usageError('VERIFY_HOME 必须是绝对路径: ' + value);
+  return path.resolve(value);
+}
+
 function isJunk(name) {
   return JUNK_FILES.has(name);
 }
@@ -98,6 +105,15 @@ function verify(codexHome, expectedCreatorFrameworkRoot) {
       .readdirSync(codexHome)
       .some((name) => name.includes('.before-restore-'));
     assert.equal(hasBackup, true, '预期存在 .before-restore-* 备份产物，但未找到');
+  }
+
+  const homeDir = readHomeDir();
+  if (homeDir !== undefined) {
+    const skillDir = path.join(homeDir, '.agents', 'skills', 'requesting-code-review');
+    for (const relative of ['SKILL.md', 'code-reviewer.md', 'references/reviewer-contract.md', 'agents/openai.yaml']) {
+      assert.equal(fs.existsSync(path.join(skillDir, relative)), true, '通用 skill 缺少 ' + relative + ': ' + skillDir);
+    }
+    assert.equal(fs.existsSync(path.join(codexHome, 'skills')), false, 'CODEX_HOME 内不应出现 skills/ 双写');
   }
 }
 

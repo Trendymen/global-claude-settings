@@ -34,6 +34,7 @@ jobs:
           node install.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $env:CODEX_HOME = "$env:FAKE_HOME\.codex"
+          $env:VERIFY_HOME = $env:FAKE_HOME
           node scripts/verify-restore.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -51,6 +52,7 @@ jobs:
           $env:CODEX_HOME = "$env:FAKE_HOME\.codex"
           $env:VERIFY_CREATORFRAMEWORK_ROOT = "$env:GITHUB_WORKSPACE\CreatorFramework"
           $env:VERIFY_EXPECT_BACKUP = '1'
+          $env:VERIFY_HOME = $env:FAKE_HOME
           node scripts/verify-restore.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "审查请求"
+  short_description: "按本地门禁执行有界代码审查、双审和修复后复审流程，保留审查证据"
+  default_prompt: "请按本地审查门禁审查当前改动。"

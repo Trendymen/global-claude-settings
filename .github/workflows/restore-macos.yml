@@ -27,7 +27,7 @@ jobs:
         run: |
           mkdir -p "$FAKE_HOME"
           HOME="$FAKE_HOME" node install.mjs
-          CODEX_HOME="$FAKE_HOME/.codex" node scripts/verify-restore.mjs
+          CODEX_HOME="$FAKE_HOME/.codex" VERIFY_HOME="$FAKE_HOME" node scripts/verify-restore.mjs
 
       - name: Restore (creatorframework-path, backup path)
         env:
@@ -37,7 +37,7 @@ jobs:
           printf 'old agents' > "$FAKE_HOME/.codex/AGENTS.md"
           printf 'local-only' > "$FAKE_HOME/.codex/hooks/local-only.mjs"
           HOME="$FAKE_HOME" node install.mjs --creatorframework-path "$GITHUB_WORKSPACE/CreatorFramework"
-          CODEX_HOME="$FAKE_HOME/.codex" VERIFY_CREATORFRAMEWORK_ROOT="$GITHUB_WORKSPACE/CreatorFramework" VERIFY_EXPECT_BACKUP=1 node scripts/verify-restore.mjs
+          CODEX_HOME="$FAKE_HOME/.codex" VERIFY_HOME="$FAKE_HOME" VERIFY_CREATORFRAMEWORK_ROOT="$GITHUB_WORKSPACE/CreatorFramework" VERIFY_EXPECT_BACKUP=1 node scripts/verify-restore.mjs
 
       - name: Wrapper smoke (install.sh --help)
         run: ./install.sh --help

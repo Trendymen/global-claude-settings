@@ -2,7 +2,7 @@
 
 本仓库保存可移植的 Codex 全局配置，并提供 macOS 与 Windows 的恢复、同步和检查入口。
 
-恢复到用户目录下 `.codex` 的内容只有四项：`AGENTS.md`、`config.toml`、`agents/` 与 `hooks/`。认证、会话及其他运行时状态不会被保存或恢复。
+恢复到用户目录下 `.codex` 的内容只有四项：`AGENTS.md`、`config.toml`、`agents/` 与 `hooks/`。此外，通用 skill `requesting-code-review` 会恢复到 `~/.agents/skills/`（按 skill 目录整体覆盖，不影响其他 skill）。认证、会话及其他运行时状态不会被保存或恢复。
 
 ## 快速开始
 

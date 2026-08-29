@@ -167,6 +167,7 @@ export function buildInstallIntent({ platform, homeDir, repoRoot, args }) {
   requireString(repoRoot, 'repoRoot');
   const normalizedHome = normalizeAbsolutePath(platform, homeDir, 'homeDir');
   const codexHome = targetPath(platform, normalizedHome, '.codex');
+  const agentSkillsRoot = targetPath(platform, normalizedHome, '.agents', 'skills');
   const sourceRoot = targetPath(platform, repoRoot, 'codex');
   const targetRoot = codexHome;
   const entries = (args.mode === 'pull' ? PULL_ENTRIES : RESTORE_ENTRIES).map((name) => ({
@@ -178,6 +179,15 @@ export function buildInstallIntent({ platform, homeDir, repoRoot, args }) {
 
   let creatorFrameworkRoot;
   let creatorFrameworkPath;
+  entries.push({
+    name: 'skills/requesting-code-review',
+    source: args.mode === 'pull'
+      ? targetPath(platform, agentSkillsRoot, 'requesting-code-review')
+      : targetPath(platform, sourceRoot, 'skills', 'requesting-code-review'),
+    target: args.mode === 'pull'
+      ? targetPath(platform, sourceRoot, 'skills', 'requesting-code-review')
+      : targetPath(platform, agentSkillsRoot, 'requesting-code-review'),
+  });
   if (args.creatorFrameworkPath !== undefined) {
     creatorFrameworkRoot = normalizeAbsolutePath(
       platform,

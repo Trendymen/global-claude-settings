@@ -58,10 +58,13 @@ function writePortablePayload(repoRoot) {
   const codexRoot = path.join(repoRoot, 'codex');
   fs.mkdirSync(path.join(codexRoot, 'agents'), { recursive: true });
   fs.mkdirSync(path.join(codexRoot, 'hooks'), { recursive: true });
+  fs.mkdirSync(path.join(codexRoot, 'skills', 'requesting-code-review', 'references'), { recursive: true });
   fs.writeFileSync(path.join(codexRoot, 'AGENTS.md'), 'repo agents\n');
   fs.writeFileSync(path.join(codexRoot, 'config.toml'), 'command = \'node "{{CODEX_HOME}}/hooks/a.mjs"\'\n');
   fs.writeFileSync(path.join(codexRoot, 'agents', 'reviewer.toml'), 'reviewer\n');
   fs.writeFileSync(path.join(codexRoot, 'hooks', 'a.mjs'), 'export {};\n');
+  fs.writeFileSync(path.join(codexRoot, 'skills', 'requesting-code-review', 'SKILL.md'), 'skill\n');
+  fs.writeFileSync(path.join(codexRoot, 'skills', 'requesting-code-review', 'references', 'reviewer-contract.md'), 'contract\n');
 }
 
 function makeFixture() {
@@ -465,7 +468,7 @@ test('空 repo restore 会跳过缺失源且不移动已有 home 目标', () => 
 
     const plan = install({ repoRoot, homeDir });
 
-    assert.deepEqual(plan.map((action) => action.type), ['skip', 'skip', 'skip', 'skip']);
+    assert.deepEqual(plan.map((action) => action.type), ['skip', 'skip', 'skip', 'skip', 'skip']);
     assert.equal(fs.readFileSync(target, 'utf8'), 'local agents\n');
     assert.equal(fs.existsSync(`${target}.before-restore-20260819000000000-1`), false);
   } finally {
@@ -481,12 +484,35 @@ test('空 home pull 不创建 repo/codex', () => {
 
     const plan = install({ repoRoot, homeDir }, ['--pull-from-home']);
 
-    assert.deepEqual(plan.map((action) => action.type), ['skip', 'skip', 'skip']);
+    assert.deepEqual(plan.map((action) => action.type), ['skip', 'skip', 'skip', 'skip']);
     assert.equal(fs.existsSync(path.join(repoRoot, 'codex')), false);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('skill 恢复到 ~/.agents/skills 且不双写 ~/.codex/skills', () => withFixture(({ repoRoot, homeDir, codexHome }) => {
+  fs.mkdirSync(path.join(homeDir, '.agents', 'skills'), { recursive: true });
+  fs.writeFileSync(path.join(homeDir, '.agents', 'skills', 'find-skills.md'), 'other\n');
+
+  install({ repoRoot, homeDir });
+
+  const skillTarget = path.join(homeDir, '.agents', 'skills', 'requesting-code-review');
+  assert.equal(fs.existsSync(path.join(skillTarget, 'SKILL.md')), true);
+  assert.equal(fs.readFileSync(path.join(skillTarget, 'references', 'reviewer-contract.md'), 'utf8'), 'contract\n');
+  assert.equal(fs.readFileSync(path.join(homeDir, '.agents', 'skills', 'find-skills.md'), 'utf8'), 'other\n');
+  assert.equal(fs.existsSync(path.join(codexHome, 'skills')), false);
+}));
+
+test('pull 从 ~/.agents/skills 取回 skill 且往返一致', () => withFixture(({ repoRoot, homeDir }) => {
+  const liveSkill = path.join(homeDir, '.agents', 'skills', 'requesting-code-review');
+  fs.mkdirSync(liveSkill, { recursive: true });
+  fs.writeFileSync(path.join(liveSkill, 'SKILL.md'), 'live skill\n');
+
+  install({ repoRoot, homeDir }, ['--pull-from-home']);
+
+  assert.equal(fs.readFileSync(path.join(repoRoot, 'codex', 'skills', 'requesting-code-review', 'SKILL.md'), 'utf8'), 'live skill\n');
+}));
 
 test('源在执行前消失时不会移动现有 restore 目标', () => withFixture(({ root }) => {
   const target = path.join(root, 'home', '.codex', 'AGENTS.md');

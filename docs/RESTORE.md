@@ -2,7 +2,7 @@
 
 本指南适用于 macOS 与 Windows。开始前安装 Node.js LTS、Git 和 Codex；Node 用于运行恢复器与 hook，Git 用于克隆仓库。
 
-恢复器只处理可移植的 `AGENTS.md`、`config.toml`、`agents/` 和 `hooks/`。它不会恢复认证、会话或其他运行时状态。
+恢复器只处理可移植的 `AGENTS.md`、`config.toml`、`agents/`、`hooks/`，以及通用 skill `requesting-code-review`（恢复到 `~/.agents/skills/`，按 skill 目录整体覆盖，不影响该目录下的其他 skill）。它不会恢复认证、会话或其他运行时状态。
 
 ## Windows PowerShell
 
@@ -68,7 +68,7 @@ git commit -m "chore: 同步 Codex 全局配置"
 git push
 ```
 
-同步只取回可移植的 `AGENTS.md`、`agents/` 和 `hooks/`；不会取回本机路径配置或运行时状态。`--pull-from-home` 不能与 `--creatorframework-path` 同时使用。
+同步只取回可移植的 `AGENTS.md`、`agents/`、`hooks/` 与 `~/.agents/skills/requesting-code-review/`；不会取回本机路径配置或运行时状态。`--pull-from-home` 不能与 `--creatorframework-path` 同时使用。
 
 ### config.toml 的同步方式
 

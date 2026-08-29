@@ -175,7 +175,7 @@ export function printUsage(io = console) {
   node install.mjs --no-overwrite
   node install.mjs --dry-run
 
-仅恢复 Codex 的 AGENTS.md、config.toml、agents/ 和 hooks/。`;
+仅恢复 Codex 的 AGENTS.md、config.toml、agents/ 和 hooks/，并把通用 skill requesting-code-review 恢复到 ~/.agents/skills/。`;
   if (typeof io?.log === 'function') io.log(usage);
 }
 
