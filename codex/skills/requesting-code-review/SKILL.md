@@ -1,22 +1,23 @@
 ---
 name: requesting-code-review
-description: Use when an implementation task, major feature, or merge candidate needs a bounded code review, a fix re-review, or a documented review decision.
+description: 实现任务、重大功能或合并候选需要有界代码审查、修复后复审，或需要留下书面审查结论时使用。
 ---
 
-# Requesting Code Review
+# 请求代码审查（Requesting Code Review）
 
-Use the local review policy, not the disabled plugin copy. Review evidence is scoped; the main-session history is never reviewer input.
+用本地的审查策略，不要用已禁用的插件副本。审查证据必须限定范围；主会话历史永远不作为 reviewer 的输入。
 
-## Select the gate
+## 选择审查门禁
 
-1. **L0** — one-file, mechanical, low-risk change with no public API, shared data, network, async, security, build, or resource impact: the main thread performs the structured review.
-2. **L1** — inside the low-risk envelope (single module, at most two code files, at most 100 changed lines, no listed high-risk boundary) but not L0: dispatch one `reviewer` with `COMBINED_REVIEW`.
-3. **L2/L3** — all other implementation tasks: dispatch independent `SPEC_COMPLIANCE` and `CODE_QUALITY` reviewers.
+1. **L0**——单文件、机械、低风险的改动，不涉及公共 API、共享数据、网络、异步、安全、构建或资源路径：由主线程完成结构化审查。
+2. **L1**——在低风险包络内（单模块、最多两个代码文件、最多 100 行改动、不触碰上述高危边界），但达不到 L0：派一个 `reviewer`，用 `COMBINED_REVIEW`。
+3. **L2/L3**——其余所有实现任务：分别派独立的 `SPEC_COMPLIANCE` 和 `CODE_QUALITY` 两个 reviewer。
 
-For L1/L2/L3, read [code-reviewer.md](code-reviewer.md) and [the reviewer contract](references/reviewer-contract.md). Dispatch a fresh, read-only `reviewer` with `fork_turns: "none"`; never pass full main-thread history.
+L1/L2/L3 先读 [code-reviewer.md](code-reviewer.md) 和 [reviewer contract](references/reviewer-contract.md)。每次都派全新的只读 `reviewer`，`fork_turns: "none"`；绝不把完整主会话历史传进去。
 
-## Fix loop
+## 修复循环
 
-Fix every Critical and Important finding before proceeding. For L1/L2/L3, send the fix back to the same reviewer thread with the unchanged mode, `REVIEW_PHASE: RE_REVIEW`, complete prior findings, a scoped fix diff, and real verification output. Only `COMBINED_REVIEW -> CODE_QUALITY` escalation is allowed; start an additional `SPEC_COMPLIANCE` reviewer then.
+先修完所有 Critical 和 Important finding 再继续。L1/L2/L3 的修复发回原 reviewer thread，mode 不变，带上 `REVIEW_PHASE: RE_REVIEW`、完整的 prior findings、限定范围的修复 diff 和真实验证输出。只允许 `COMBINED_REVIEW -> CODE_QUALITY` 这一种升级，升级时另派一个 `SPEC_COMPLIANCE` reviewer。
 
-For L0, record the requirement check, changed paths, verification evidence, and residual risk in the main-thread review before proceeding.
+L0 在主线程审查里记下需求核对、改动路径、验证证据和 residual risk，再继续。
+
