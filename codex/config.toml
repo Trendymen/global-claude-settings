@@ -12,7 +12,8 @@ web_search = "live"
 service_tier = "default"
 
 [model_providers.custom]
-name = "OpenAI"
+name = "聚合"
+experimental_bearer_token = "xxx"
 wire_api = "responses"
 requires_openai_auth = true
 supports_websockets = true
@@ -31,6 +32,9 @@ hooks = true
 chronicle = true
 js_repl = false
 standalone_web_search = true
+
+[tools.update_plan]
+enabled = true
 
 [[hooks.SessionStart]]
 [[hooks.SessionStart.hooks]]
@@ -128,6 +132,9 @@ use_memories = true
 
 [tui]
 status_line = ["model-with-reasoning", "current-dir", "git-branch", "context-remaining", "five-hour-limit", "context-window-size"]
+
+[notice]
+hide_rate_limit_model_nudge = true
 
 [mcp_servers.chrome-devtools]
 type = "stdio"
