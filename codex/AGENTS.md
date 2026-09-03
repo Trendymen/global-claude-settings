@@ -9,11 +9,8 @@
 - `~/.codex/AGENTS.md` 是 Codex 侧全局规则；`~/.claude/CLAUDE.md` 是 Claude Code 侧全局规则。
 - 两边共享的行为偏好保持一致，但工具名必须按平台运行时真实名称书写，不要互相硬搬。
 - Codex 端规则里当前使用的 MCP / 工具名以 `codex mcp list` 与当前会话工具列表为准；规则中涉及浏览器时统一写 `chrome-devtools`、`playwright`。
-- Claude 专属项包括 `AskUserQuestion`、`TaskCreate` / `TaskUpdate`、`Agent`、`TeamCreate`、`Monitor`、`ScheduleWakeup`、Claude Code hooks。
-- Codex 对应迁移为 `request_user_input`（可用时）、`update_plan`、`spawn_agent` / `tool_search`、`exec_command` session + `write_stdin`、Codex lifecycle hooks。
+- Codex 侧的交互、计划、多 Agent、长任务与 hooks 分别使用当前运行时提供的 `request_user_input`（可用时）、`update_plan`、`spawn_agent` / `tool_search`、`exec_command` session + `write_stdin`、Codex lifecycle hooks。
 - 当规则需要同步时，先判断它是“行为偏好”还是“平台工具实现”；行为偏好两边同步，平台工具实现只写入对应平台文件。
-
-（可移植说明：本节为跨平台同步约定，机器本位文件分别为 `~/.codex/AGENTS.md` 与 `~/.claude/CLAUDE.md`。）
 
 ## 主线程消息转发
 
@@ -176,6 +173,17 @@
 - 写入或修订 `docs/superpowers/plans/*.md` 后，必须立即派 `reviewer` 执行 `REVIEW_MODE: PLAN_DOCUMENT`；Plan 未获 `Approved` 禁止进入 `subagent-driven-development`、`executing-plans` 或实现阶段。
 - 文档审查的 Critical / Important finding 必须修复；修订后使用原 reviewer 的 `REVIEW_PHASE: RE_REVIEW`。用户审阅不能替代独立 reviewer。
 - `superpowers-document-review-reminder` 只负责检测、提醒和审计，不会自行派发 reviewer；收到提醒后由主线程执行上述门禁。Codex CLI 的 UI/JSON 可能把编辑显示为 `file_change`，但受信任的 hook 生命周期可实际收到 `apply_patch`；匹配的审计事件是触发的正向证据，日志缺失不能单独否定触发，需结合 hook stderr 或运行时诊断，不能只看 UI 工具标签或 agent 的口头回报。
+### Architectural 任务的 SDD 恢复材料
+
+- 所有经 `brainstorming` 判定为 **Architectural** 的任务，在 Spec 和 Plan 获批并进入实施后，无论用户选择 `Inline Execution` 还是 `subagent-driven-development`，都必须按 SDD 的恢复机制维护当前 Plan 专属的本地 workspace；Inline 只决定由主线程实现，不得作为省略 ledger 或过程材料的理由，也不得因为创建 SDD workspace 自动改成子代理执行。
+- 第一次实施动作前，优先运行当前 `subagent-driven-development` skill 提供的 `scripts/sdd-workspace <PLAN_FILE>` 获取 workspace，禁止手写猜测目录；workspace 必须与 Plan 一一对应，其他 Plan 的目录和旧的 `.superpowers/sdd/progress.md` 不得复用。若接手的是已经开始但缺少 workspace 的 Architectural 任务，必须在下一次代码动作前补建，并只根据 Git、当前 Review 和真实验证证据回填；无法核实的内容明确标为未知，禁止伪造完成记录。
+- workspace 至少维护以下本地过程材料：
+  - `progress.md`：首行严格写为 `# SDD ledger — plan: <plan file path>`；持续记录每个 Task 的 `pending / in progress / fix round / complete`、提交 SHA、Review scope 与 patch hash、验证命令和结果、未关闭 finding、residual risk、暂停原因及恢复入口。只有提交与门禁证据真实存在时才能写 `complete`。
+  - 每个 Task 的有界 brief：只包含该 Task 的需求、约束、文件范围、依赖和验收，不复制整段主会话或无关 Plan 内容。
+  - implementation report：记录实际改动、偏离与原因、验证证据、未验证项和交接信息。
+  - review package 与 reviewer verdict 摘要：记录审查模式、范围、基准、patch hash、findings、修复轮次和最终 Gate；不得用摘要替代 reviewer 的真实结论。
+- `update_plan` 与 SDD ledger 必须同步：`update_plan` 用于当前会话的可见任务状态，`progress.md` 用于压缩、重启和跨会话恢复；二者冲突时先依据 Git、Review 指纹和验证输出纠正状态，不能凭记忆覆盖 ledger。
+- SDD workspace 默认必须 Git ignored、untracked、unstaged，不得混入生产提交；除非用户明确要求提交这些材料。维护进度、测试数量、patch hash或修复轮次时只更新 workspace。
 
 ### 执行方式选择不得自动降级
 
@@ -197,16 +205,16 @@
 - 若这些内容已经在中间进度里说过，最终回复或等待用户输入前的可见回复必须用中文重新给出完整要点，不能只写“如上”“已在上面说明”。
 - 只有纯流程状态可以放在可折叠区域，例如正在读取哪个 skill、正在扫哪些文件、某个只读命令是否完成；任何会影响用户决策的内容都要在可见回复里重复。
 
-### Checklist / Todo 迁移
+### Checklist / 计划管理
 
-- Claude 的 `TodoWrite` / `TaskCreate` 规则在 Codex 中迁移为 `update_plan`。
+- Codex 中的任务清单统一使用 `update_plan`。
 - 对 superpowers skill 中明确写有 checklist、step-by-step、或 “You MUST create a task for each” 的流程，进入后应建立 `update_plan` 清单。
 - 清单一次只保留一个 `in_progress`，完成一项及时更新，不要只在最后批量标记。
 - 不适用的步骤在说明里写清跳过原因。
 
-### 用户提问迁移
+### 用户提问
 
-- Claude 的 `AskUserQuestion` 规则在 Codex 中迁移为：`request_user_input` 可用且场景适合时优先使用。
+- `request_user_input` 可用且场景适合时优先使用。
 - 若 `request_user_input` 不可用，按当前 Codex 模式要求处理：能合理假设就继续推进；必须问时只问 1 个简短问题。
 - 不要为了模拟结构化按钮，在普通文本里写复杂多选题。
 - 真开放题、路径/URL/数字等具体值、贴日志等问题仍用普通文本。
@@ -263,7 +271,7 @@
 
 - 本规则只适用于 CreatorFramework 项目；其他项目目录不需要查找 `AGENTS.local.md`。
 - 如果当前 worktree 里 `AGENTS.local.md` 不存在，按团队 `AGENTS.md` + 本文件全局规则正常工作，不报错。
-- 本机可选：`CLAUDE.local.md` 与 `AGENTS.local.md` 内容互为镜像；改一处通常需要同步另一处（仅适用于同时使用两侧的机器）。
+- `CLAUDE.local.md` 与 `AGENTS.local.md` 内容互为镜像；改一处通常需要同步另一处。
 
 ### 主动 Read 清单（弥补 Codex 不解析 inline @import）
 
@@ -278,3 +286,20 @@
 文件不存在时跳过，不报错。优先级低于 `AGENTS.local.md`，但高于团队 `AGENTS.md`。
 
 如果 `AGENTS.local.md` §10 入口段的引用清单变动，必须同步修改本清单。
+
+## 项目级 AGENTS 加载顺序（OpenCodex Relay）
+
+### 适用范围
+
+当当前工作目录属于 `<OpenCodex Relay 仓库根>`（本机为 `~/webstorm_project/opencodex-relay`），或属于该仓库的任意 git worktree 时，本规则生效。当前 worktree 根通过 `git rev-parse --show-toplevel` 获取，不要写死到子目录。
+
+### 加载顺序（从高到低）
+
+1. `<当前 worktree 根>/AGENTS.local.md`：必须主动读取；与仓库或全局规则冲突时优先遵循。
+2. `<当前 worktree 根>/AGENTS.md`：仓库团队规则。
+3. 本文件其余全局规则：仅作为基线。
+
+### 补充约定
+
+- `AGENTS.local.md` 不存在时，按仓库 `AGENTS.md` 与本文件全局基线执行，不报错。
+- 该项目的本地规则应包含专项测试文件隔离，以及相对官方版本最小修改面的实现与审查约束；后者是每次代码审查的必查项。
