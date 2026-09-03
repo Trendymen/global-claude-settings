@@ -173,6 +173,7 @@
 - 写入或修订 `docs/superpowers/plans/*.md` 后，必须立即派 `reviewer` 执行 `REVIEW_MODE: PLAN_DOCUMENT`；Plan 未获 `Approved` 禁止进入 `subagent-driven-development`、`executing-plans` 或实现阶段。
 - 文档审查的 Critical / Important finding 必须修复；修订后使用原 reviewer 的 `REVIEW_PHASE: RE_REVIEW`。用户审阅不能替代独立 reviewer。
 - `superpowers-document-review-reminder` 只负责检测、提醒和审计，不会自行派发 reviewer；收到提醒后由主线程执行上述门禁。Codex CLI 的 UI/JSON 可能把编辑显示为 `file_change`，但受信任的 hook 生命周期可实际收到 `apply_patch`；匹配的审计事件是触发的正向证据，日志缺失不能单独否定触发，需结合 hook stderr 或运行时诊断，不能只看 UI 工具标签或 agent 的口头回报。
+
 ### Architectural 任务的 SDD 恢复材料
 
 - 所有经 `brainstorming` 判定为 **Architectural** 的任务，在 Spec 和 Plan 获批并进入实施后，无论用户选择 `Inline Execution` 还是 `subagent-driven-development`，都必须按 SDD 的恢复机制维护当前 Plan 专属的本地 workspace；Inline 只决定由主线程实现，不得作为省略 ledger 或过程材料的理由，也不得因为创建 SDD workspace 自动改成子代理执行。
@@ -291,7 +292,7 @@
 
 ### 适用范围
 
-当当前工作目录属于 `<OpenCodex Relay 仓库根>`（本机为 `~/webstorm_project/opencodex-relay`），或属于该仓库的任意 git worktree 时，本规则生效。当前 worktree 根通过 `git rev-parse --show-toplevel` 获取，不要写死到子目录。
+当当前工作目录属于 `~/webstorm_project/opencodex-relay`，或属于该仓库的任意 git worktree 时，本规则生效。当前 worktree 根通过 `git rev-parse --show-toplevel` 获取，不要写死到子目录。
 
 ### 加载顺序（从高到低）
 
