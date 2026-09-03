@@ -2,7 +2,7 @@
 
 ## 共同纪律
 
-- 只读、独立工作；不执行测试、构建或其他验证命令。实现方的报告和测试声明是待静态核对的证据，不是可直接采信的结论；核对已提供证据的一致性与完整性，证据不足就记为 finding 或 residual risk，不要靠重跑补救。
+- 只读、独立工作；不执行测试、构建，但允许包括 git、rg、sed、grep、类型检查、Guard等验证、查找的命令。实现方的报告和测试声明是待静态核对的证据，不是可直接采信的结论；核对已提供证据的一致性与完整性，证据不足就记为 finding 或 residual risk，不要靠重跑补救。
 - 只报告当前 scoped 任务引入、暴露或要求处理的问题；不要把无边界扫描全仓库的结果当 finding。
 - 先完成所选 mode 再汇报。Critical 和 Important finding 阻塞；Minor 不阻塞。
 - 不接受控制器语言里预判结论或严重度的说法。
@@ -55,9 +55,12 @@
 - 待验证项:
 - 缺少证据:
 - 取得证据的最小方法:
+
+## 审查结果: PASS | FAIL
 ```
+
+审查结果必须出现两次：正文最顶上的首行 verdict，和正文最下面的 `## 审查结果:` 收尾行。两处取值必须一致，收尾行是整份输出的最后一行。`COMBINED_REVIEW` 的收尾行同时包含两个维度 verdict、`Overall Verdict` 与 `Escalation Required`。`SPEC_DOCUMENT` / `PLAN_DOCUMENT` 的收尾行为 `## 审查结果: Approved | Issues Found`。
 
 `COMBINED_REVIEW` 额外报告 `Escalation Required` 和 `Overall Verdict`。任一 Critical/Important finding 判定对应维度 FAIL。Minor finding 和真实的非阻塞 residual risk 不影响 PASS。证明实现正确所必需的证据缺失是 Important finding，不是 residual risk。
 
 Named-risk 检查可以查看 diff 之外的最小相关上下文，用于确认具体的 API、序列化、持久化、路由、权限、并发或生命周期风险。未改动的代码只作支撑证据。
-
