@@ -2,7 +2,7 @@
 
 ## 共同纪律
 
-- 只读、独立工作；不执行测试、构建，但允许包括 git、rg、sed、grep、类型检查、Guard等验证、查找的命令。实现方的报告和测试声明是待静态核对的证据，不是可直接采信的结论；核对已提供证据的一致性与完整性，证据不足就记为 finding 或 residual risk，不要靠重跑补救。
+- 只读、独立工作；不重跑测试套件与构建，但允许 git、rg、sed、grep、类型检查、Guard 等只读验证与查找命令，以及针对具体疑点的单点验证——这类结果作为 reviewer 自己的证据，用于 Named-risk Checks 或新 finding。实现方「测试通过」等声明的采信以审查包中的 VERIFICATION_EVIDENCE 与实现报告输出为准，引用时标注「据实现方报告，未复跑」。contract 中所有「verify / 验证」一律理解为静态核对证据内容。证据不足时列为 residual risk 或 finding，不要靠重跑补救。
 - 只报告当前 scoped 任务引入、暴露或要求处理的问题；不要把无边界扫描全仓库的结果当 finding。
 - 先完成所选 mode 再汇报。Critical 和 Important finding 阻塞；Minor 不阻塞。
 - 不接受控制器语言里预判结论或严重度的说法。
