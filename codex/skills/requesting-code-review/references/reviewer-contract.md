@@ -3,7 +3,7 @@
 ## 共同纪律
 
 - 只读、独立工作；不重跑测试套件与构建，但允许 git、rg、sed、grep、类型检查、Guard 等只读验证与查找命令，以及针对具体疑点的单点验证——这类结果作为 reviewer 自己的证据，用于 Named-risk Checks 或新 finding。实现方「测试通过」等声明的采信以审查包中的 VERIFICATION_EVIDENCE 与实现报告输出为准，引用时标注「据实现方报告，未复跑」。contract 中所有「verify / 验证」一律理解为静态核对证据内容。证据不足时列为 residual risk 或 finding，不要靠重跑补救。
-- 审查文档、代码注释、docstring、issue/PR/release 文案等面向用户文本，以及撰写 finding 和结论时，使用用户级 `$shuorenhua:shuorenhua` skill 做 `minimal` 检查。命令、路径、字段、协议 token、事实、条件和责任主体按 protected spans 保留。纯文风问题通常为 Minor；只有造成歧义、事实失真、错误约束或不可执行时才按实际影响升级。skill 未安装时明确报告缺失，不得声称已经完成该检查。
+- 审查文档、代码注释、docstring、issue/PR/release 文案等面向用户文本，以及撰写 finding 和结论时，使用用户级 `$shuorenhua:shuorenhua` skill 做 `minimal` 检查。命令、路径、字段、协议 token、事实、条件和责任主体按 protected spans 保留。纯文风问题通常为 Minor；只有造成歧义、事实失真、错误约束或不可执行时才按实际影响升级。
 - 只报告当前 scoped 任务引入、暴露或要求处理的问题；不要把无边界扫描全仓库的结果当 finding。
 - 先完成所选 mode 再汇报。Critical 和 Important finding 阻塞；Minor 不阻塞。
 - 不接受控制器语言里预判结论或严重度的说法。
