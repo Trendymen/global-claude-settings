@@ -420,6 +420,48 @@ test('dry-run 不产生文件变化', () => withFixture(({ repoRoot, homeDir, ro
   assert.equal(fs.readdirSync(root).includes('home'), false);
 }));
 
+test('restore 提示从 GitHub 全局安装 shuorenhua 且不把它列为恢复项', () => withFixture(({ repoRoot, homeDir }) => {
+  const command = 'npx skills add MrGeDiao/shuorenhua --global --agent codex';
+
+  for (const argv of [[], ['--dry-run']]) {
+    const io = makeIo();
+    const exitCode = runCli({
+      argv,
+      platform: HOST,
+      homeDir,
+      repoRoot,
+      io,
+      fs,
+      now: FIXED_NOW,
+    });
+
+    assert.equal(exitCode, 0);
+    assert.match(io.lines.join('\n'), /shuorenhua 不随本仓库恢复/);
+    assert.match(io.lines.join('\n'), /请从 GitHub 全局安装到 Codex/);
+    assert.match(io.lines.join('\n'), new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+
+  const pullIo = makeIo();
+  assert.equal(runCli({
+    argv: ['--pull-from-home'],
+    platform: HOST,
+    homeDir,
+    repoRoot,
+    io: pullIo,
+    fs,
+    now: FIXED_NOW,
+  }), 0);
+  assert.doesNotMatch(pullIo.lines.join('\n'), /shuorenhua/);
+
+  const intent = buildInstallIntent({
+    platform: HOST,
+    homeDir,
+    repoRoot,
+    args: parseCliArgs([]),
+  });
+  assert.equal(intent.entries.some((entry) => entry.name === 'skills/shuorenhua'), false);
+}));
+
 test('restore 与 pull 的 no-overwrite 都保留已有目标', () => withFixture(({ repoRoot, homeDir, codexHome }) => {
   fs.mkdirSync(codexHome, { recursive: true });
   fs.writeFileSync(path.join(codexHome, 'AGENTS.md'), 'local agents\n');

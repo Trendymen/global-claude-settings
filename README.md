@@ -4,6 +4,8 @@
 
 恢复到用户目录下 `.codex` 的内容只有四项：`AGENTS.md`、`config.toml`、`agents/` 与 `hooks/`。此外，通用 skill `requesting-code-review` 会恢复到 `~/.agents/skills/`（按 skill 目录整体覆盖，不影响其他 skill）。认证、会话及其他运行时状态不会被保存或恢复。
 
+`shuorenhua` 不纳入本仓库，也不会被同步或自动安装。恢复器会提示从 GitHub 全局安装到 Codex：`npx skills add MrGeDiao/shuorenhua --global --agent codex`。
+
 ## 快速开始
 
 先安装 Node.js LTS、Git 和 Codex，然后克隆本仓库。请将 `<仓库地址>` 替换为实际 Git 地址。

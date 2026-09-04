@@ -12,6 +12,7 @@ import {
 } from './install-core.mjs';
 
 const DEFAULT_REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const SHUORENHUA_INSTALL_COMMAND = 'npx skills add MrGeDiao/shuorenhua --global --agent codex';
 
 function formatTimestamp(value) {
   return value.toISOString().replace(/[-:.TZ]/g, '');
@@ -164,8 +165,11 @@ export function runInstall({
   const intent = buildInstallIntent({ platform, homeDir, repoRoot, args });
   const fileState = collectFileState({ fs, intent, now: now() });
   const plan = resolveExecutionPlan(intent, fileState);
-  if (args.dryRun) return printPlan(plan, io);
-  return executePlan(plan, fs, io);
+  const result = args.dryRun ? printPlan(plan, io) : executePlan(plan, fs, io);
+  if (args.mode === 'restore') {
+    log(io, `shuorenhua 不随本仓库恢复。请从 GitHub 全局安装到 Codex：${SHUORENHUA_INSTALL_COMMAND}`);
+  }
+  return result;
 }
 
 export function printUsage(io = console) {
@@ -175,7 +179,8 @@ export function printUsage(io = console) {
   node install.mjs --no-overwrite
   node install.mjs --dry-run
 
-仅恢复 Codex 的 AGENTS.md、config.toml、agents/ 和 hooks/，并把通用 skill requesting-code-review 恢复到 ~/.agents/skills/。`;
+仅恢复 Codex 的 AGENTS.md、config.toml、agents/ 和 hooks/，并把通用 skill requesting-code-review 恢复到 ~/.agents/skills/。
+shuorenhua 不随本仓库恢复；restore 会提示从 GitHub 全局安装。`;
   if (typeof io?.log === 'function') io.log(usage);
 }
 

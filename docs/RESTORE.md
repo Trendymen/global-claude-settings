@@ -4,6 +4,8 @@
 
 恢复器只处理可移植的 `AGENTS.md`、`config.toml`、`agents/`、`hooks/`，以及通用 skill `requesting-code-review`（恢复到 `~/.agents/skills/`，按 skill 目录整体覆盖，不影响该目录下的其他 skill）。它不会恢复认证、会话或其他运行时状态。
 
+`shuorenhua` 不在恢复和同步范围内。普通恢复与 `--dry-run` 会显示 GitHub 全局安装提示：`npx skills add MrGeDiao/shuorenhua --global --agent codex`；`--pull-from-home` 不显示该提示。
+
 ## Windows PowerShell
 
 ```powershell
