@@ -56,6 +56,11 @@ test('CreatorFramework 内提醒读取 AGENTS.local 与 AGENTS', () => {
     assert.match(output.systemMessage, /CreatorFramework AGENTS 提醒/);
     assert.match(output.systemMessage, /AGENTS.local.md/);
     assert.match(output.systemMessage, /AGENTS.md/);
+    assert.match(output.systemMessage, /沿当前 worktree 根到目标文件所在目录逐级查找/);
+    assert.match(output.systemMessage, /AGENTS.override.md/);
+    assert.match(output.systemMessage, /新增修改目录、移动文件或扩大审查范围时补查/);
+    assert.match(output.systemMessage, /审查包必须列出覆盖全部待审查文件的适用规则路径及关键约束/);
+    assert.match(output.systemMessage, /本 hook 仅作提醒，不拒绝工具调用、不阻断提交、不增加审批/);
   } finally {
     rmSync(fixture.root, { recursive: true, force: true });
   }

@@ -725,6 +725,30 @@ test('可移植 config 不含机器绑定集成且全部 hook 通过 CODEX_HOME 
   assert.match(agents, /<当前 CreatorFramework 根>/);
 });
 
+test('实际恢复保留可移植环境策略与桌面偏好且排除机器环境注入', () => {
+  const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'codex-portable-config-'));
+  const homeDir = path.join(fixtureRoot, 'home');
+  try {
+    install({ repoRoot: REPO_ROOT, homeDir });
+    const restored = fs.readFileSync(path.join(homeDir, '.codex', 'config.toml'), 'utf8');
+
+    assert.match(restored, /\[shell_environment_policy\]\s+inherit = "core"/);
+    assert.match(restored, /\[sandbox_workspace_write\]\s+network_access = true/);
+    assert.match(restored, /composerPlainTextMode = true/);
+    assert.match(restored, /open-local-url-in-target-preference = "external-browser"/);
+    assert.match(restored, /show-ultra-in-model-picker-slider = false/);
+    assert.match(restored, /toys-confetti-enabled = true/);
+    assert.match(restored, /appearanceLightCodeThemeId = "codex"/);
+    assert.match(restored, /\[desktop\.appearanceLightChromeTheme\]/);
+    assert.match(restored, /\[desktop\.appearanceDarkChromeTheme\]/);
+    assert.doesNotMatch(restored, /\[shell_environment_policy\.set\]/);
+    assert.doesNotMatch(restored, /NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S/);
+    assert.doesNotMatch(restored, /CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS/);
+  } finally {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  }
+});
+
 test('help 只允许单独使用，混合参数返回 usage error', () => {
   const standaloneIo = makeIo();
   assert.equal(runCli({ argv: ['--help'], io: standaloneIo }), 0);

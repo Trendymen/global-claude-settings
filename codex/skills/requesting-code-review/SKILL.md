@@ -13,11 +13,10 @@ description: 实现任务、重大功能或合并候选需要有界代码审查�
 2. **L1**——在低风险包络内（单模块、最多两个代码文件、最多 100 行改动、不触碰上述高危边界），但达不到 L0：派一个 `reviewer`，用 `COMBINED_REVIEW`。
 3. **L2/L3**——其余所有实现任务：分别派独立的 `SPEC_COMPLIANCE` 和 `CODE_QUALITY` 两个 reviewer。
 
-L1/L2/L3 先读 [code-reviewer.md](code-reviewer.md) 和 [reviewer contract](references/reviewer-contract.md)。每次都派全新的只读 `reviewer`，`fork_turns: "none"`；绝不把完整主会话历史传进去。
+L1/L2/L3 先读 [code-reviewer.md](code-reviewer.md) 和 [reviewer contract](references/reviewer-contract.md)。INITIAL 审查派全新的只读 `reviewer`，`fork_turns: "none"`；修复后的 RE_REVIEW 复用原 reviewer thread（见「修复循环」），同样只携带审查包、不传完整主会话历史。
 
 ## 修复循环
 
 先修完所有 Critical 和 Important finding 再继续。L1/L2/L3 的修复发回原 reviewer thread，mode 不变，带上 `REVIEW_PHASE: RE_REVIEW`、完整的 prior findings、限定范围的修复 diff 和真实验证输出。只允许 `COMBINED_REVIEW -> CODE_QUALITY` 这一种升级，升级时另派一个 `SPEC_COMPLIANCE` reviewer。
 
 L0 在主线程审查里记下需求核对、改动路径、验证证据和 residual risk，再继续。
-

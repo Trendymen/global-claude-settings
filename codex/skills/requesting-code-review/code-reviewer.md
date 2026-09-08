@@ -26,7 +26,6 @@ REVIEW_SCOPE_ID: <稳定的任务或分支标识>
 - L2/L3：两个独立 `reviewer` thread，一个 `SPEC_COMPLIANCE`，一个 `CODE_QUALITY`。
 - COMBINED_REVIEW 只能升级到 `CODE_QUALITY`，升级时另派一个 `SPEC_COMPLIANCE` reviewer。
 - 常规修复复审回到原 reviewer thread，mode 保持不变。
-- 每次派发都用 `fork_turns: "none"`，把有界审查包放进 prompt，不靠继承历史。
+- INITIAL 派发都用 `fork_turns: "none"`，把有界审查包放进 prompt，不靠继承历史；RE_REVIEW 复用原 reviewer thread，同样只带审查包。
 
 输出契约以 [references/reviewer-contract.md](references/reviewer-contract.md) 为准。
-

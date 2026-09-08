@@ -18,6 +18,14 @@
 - Codex 侧的交互、计划、多 Agent、长任务与 hooks 分别使用当前运行时提供的 `request_user_input`（可用时）、`update_plan`、`spawn_agent` / `tool_search`、`exec_command` session + `write_stdin`、Codex lifecycle hooks。
 - 当规则需要同步时，先判断它是“行为偏好”还是“平台工具实现”；行为偏好两边同步，平台工具实现只写入对应平台文件。
 
+## 修改与审查前的目录规则检查
+
+- 修改或审查任何文件前，先确定当前仓库 / worktree 根目录，再沿根目录到目标文件所在目录逐级查找 `AGENTS.md`，读取尚未加载的适用规则；存在 `AGENTS.override.md` 时按 Codex 的同级覆盖约定处理。不得假定启动时读取根目录规则就已覆盖所有子目录。
+- 规则只适用于其声明的范围；目录规则与本地扩展规则的冲突沿用项目已有优先级，不因本检查改变。非仓库文件按其所在目录及适用的上级规则处理。
+- 新增修改目录、移动文件或扩大审查范围时，先补查新路径上的规则；已读取且未变化的文件可以复用，规则内容变化后须重读。只检查相关路径，不递归扫描无关目录。
+- 审查包必须列出覆盖全部待审查文件的适用规则文件路径及关键约束，包含目录级规则，不能只列全局或仓库根规则。审查者先核对并补读遗漏规则，再判断实现是否符合要求。
+- hook 只作补读提醒，不因未检测到读取记录而拒绝工具调用、阻断提交或要求额外审批；收到提醒不能代替实际读取。
+
 ## 主线程消息转发
 
 - 用户明确说“发消息给主线程”“转告主线程”或同义表达时，立即定位当前关联主任务，并使用 Codex 的 thread message 工具发送简洁、可执行的 follow-up；不得要求用户重复确认。
@@ -98,6 +106,8 @@
 - L1：仍满足单模块、最多 2 个代码文件、改动不超过 100 行且不存在前述高风险边界，但不满足 L0 的任务，派一个 `reviewer`，使用 `COMBINED_REVIEW`。
 - L2/L3：其余实现 Task 必须分别派 `SPEC_COMPLIANCE` 与 `CODE_QUALITY` 两个独立 `reviewer`。任一 Critical/Important finding 均阻塞后续。
 - L1/L2/L3 修复后必须复用该 Task 原 reviewer thread，保持原 `REVIEW_MODE`，以 `REVIEW_PHASE: RE_REVIEW` 携带完整 `PRIOR_FINDINGS`、`FIX_DIFF` 与真实 `VERIFICATION_EVIDENCE`。唯一允许转换为 `COMBINED_REVIEW -> CODE_QUALITY` escalation，同时另起 `SPEC_COMPLIANCE` reviewer。
+- SDD（subagent-driven-development）及其他插件流程的 scoped re-review 同样受本门禁与 reviewer contract 约束：不派 general-purpose subagent，改用 `reviewer` 角色并优先以 followup 复用原 reviewer thread；原 thread 不可达时才新派 `reviewer` 并在审查包注明 RE_REVIEW。忽略 re-review-prompt.md 的 model 选择要求，模型与 effort 继承主线程。
+- SDD 复审派发保留 re-review-prompt.md 的材料（findings 清单、fix diff、fix report），并补齐 contract 三件套 header（`REVIEW_MODE` = 原 review 的 mode、`REVIEW_PHASE: RE_REVIEW`、`REVIEW_SCOPE_ID` 不变）；每条 finding 的 ADDRESSED | NOT ADDRESSED 裁定并入 Findings 正文，fix diff 的新破坏记为新 finding，最终输出保持 contract 的 `PASS | FAIL` 与「审查结果」双位置格式；主线程从 Findings 中提取逐条处理状态维护 SDD ledger，5 轮上限与 break 规则不变。
 - 审查包只能包含当前 Task 的 brief、绑定约束、scoped diff/review package、必要实现报告与验证证据；禁止传主会话历史、无关 Task、完整 Plan 或预判 verdict。输出按 `$requesting-code-review` 的 reviewer contract。
 
 ## 多 Agent 与并行规则

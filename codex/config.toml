@@ -11,6 +11,12 @@ sandbox_mode = "danger-full-access"
 web_search = "live"
 service_tier = "default"
 
+[sandbox_workspace_write]
+network_access = true
+
+[shell_environment_policy]
+inherit = "core"
+
 [model_providers.custom]
 name = "聚合"
 experimental_bearer_token = "xxx"
@@ -120,11 +126,49 @@ statusMessage = "提醒 Superpowers 文档审查"
 sansFontSize = 13
 usePointerCursors = true
 followUpQueueMode = "steer"
+preventSleepWhileRunning = true
+keepRemoteControlAwakeWhilePluggedIn = true
 conversationDetailMode = "STEPS_COMMANDS"
 appearanceTheme = "system"
+open-local-url-in-target-preference = "external-browser"
 show-context-window-usage = true
 enabled-reasoning-efforts = ["low", "medium", "high", "xhigh", "ultra", "max"]
+show-ultra-in-model-picker-slider = false
 localeOverride = "zh-CN"
+toys-confetti-enabled = true
+composerPlainTextMode = true
+appearanceLightCodeThemeId = "codex"
+
+[desktop.appearanceLightChromeTheme]
+accent = "#0169cc"
+accentSource = "chatgpt"
+contrast = 45
+ink = "#0d0d0d"
+opaqueWindows = false
+surface = "#ffffff"
+
+[desktop.appearanceLightChromeTheme.fonts]
+code = '"JetBrains Mono"'
+
+[desktop.appearanceLightChromeTheme.semanticColors]
+diffAdded = "#00a240"
+diffRemoved = "#e02e2a"
+skill = "#751ed9"
+
+[desktop.appearanceDarkChromeTheme]
+accent = "#339cff"
+contrast = 60
+ink = "#ffffff"
+opaqueWindows = false
+surface = "#181818"
+
+[desktop.appearanceDarkChromeTheme.fonts]
+code = '"JetBrains Mono"'
+
+[desktop.appearanceDarkChromeTheme.semanticColors]
+diffAdded = "#40c977"
+diffRemoved = "#fa423e"
+skill = "#ad7bf9"
 
 [memories]
 generate_memories = true
