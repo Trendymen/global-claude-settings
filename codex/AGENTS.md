@@ -15,7 +15,7 @@
 - `~/.codex/AGENTS.md` 是 Codex 侧全局规则；`~/.claude/CLAUDE.md` 是 Claude Code 侧全局规则。
 - 两边共享的行为偏好保持一致，但工具名必须按平台运行时真实名称书写，不要互相硬搬。
 - Codex 端规则里当前使用的 MCP / 工具名以 `codex mcp list` 与当前会话工具列表为准；规则中涉及浏览器时统一写 `chrome-devtools`、`playwright`。
-- Codex 侧的交互、计划、多 Agent、长任务与 hooks 分别使用当前运行时提供的 `request_user_input`（可用时）、`update_plan`、`spawn_agent` / `tool_search`、`exec_command` session + `write_stdin`、Codex lifecycle hooks。
+- Codex 侧的交互优先使用当前运行时提供的 `functions.request_user_input_async`；`functions.request_user_input` 按工具定义与当前模式限制使用，具体见「用户提问」。计划、多 Agent、长任务与 hooks 分别使用 `update_plan`、`spawn_agent` / `tool_search`、`exec_command` session + `write_stdin`、Codex lifecycle hooks。
 - 当规则需要同步时，先判断它是“行为偏好”还是“平台工具实现”；行为偏好两边同步，平台工具实现只写入对应平台文件。
 
 ## 修改与审查前的目录规则检查
@@ -44,6 +44,16 @@
 
 例外：用户明确要求“读取完整文件”“给我看完整内容”时可以完整读取；“参考这个文件”“这是相关文件”等间接提及不算明确要求。
 
+## 文件编辑工具规则（Codex 全局）
+
+- 本节适用于所有项目中的 Codex 主代理，以及所有获准写文件的子代理，不限于 `general`；不改变只读角色或任务原有的写入权限。
+- 人工编写的代码、配置和文档，其新增、局部修改和内容删除必须使用原生 `apply_patch` 工具。普通手工修改不得改用 Node/Python 的文件写入或字符串替换、`sed -i`、`perl -pi`、Shell 重定向等方式绕过补丁工具。
+- 有直接的 `apply_patch` 工具时直接调用；需要通过 `functions.exec` 调用 `tools.apply_patch(...)` 时，为补丁单独发起一次调用，不混入读取、检查或其他命令，便于在会话记录中辨认文件修改。工具经过封装调用仍视为可用，不得据此改用脚本写文件。
+- 允许例外：跨文件、规则一致的机械批量替换或 AST codemod；现有格式化器、代码生成器、构建及资源处理工具维护的产物；二进制或结构化数据处理输出；用户明确指定其他编辑方式。普通功能修改即使涉及多个文件，也不自动成为批量处理例外。
+- 使用例外前，简短说明处理目的、目标范围和不使用补丁的原因，无需为已授权范围另行请求许可。批量替换须在写入前校验目标和预期命中数，不符时停止；完成后检查实际 diff，并报告修改文件和验证结果。不得用空补丁或事后补丁掩盖脚本已完成的写入。
+- `apply_patch` 确实未提供或实际调用失败、且无法通过修正补丁继续时，先说明具体限制和替代编辑方式，不得静默降级。会话界面可能仍显示外层 `functions.exec`；修改后简短指出实际编辑工具及文件，不承诺特定 UI 卡片或标签一定出现。
+- 向有写入职责的子代理派发任务时，在 brief 或提示中明确引用本节，要求其报告编辑工具及例外原因；主代理核对实际工具记录，不能只凭“已使用补丁”的口头声明。
+
 ## Shell 命令使用规则
 
 - 默认优先使用内置工具：文件搜索用内置 `glob` 工具（不用 Bash `find`/`ls`），内容搜索用内置 `grep` 工具（不用 Bash `grep`/`rg`），读文件用内置 `read` 工具（不用 Bash `cat`/`head`/`tail`）。
@@ -54,6 +64,8 @@
 ## 脚本语言优先级规则
 
 适用范围：CLI 内联脚本、一次性批处理、落盘脚本、辅助工具、数据处理、文件转换、批量操作等。
+
+本节只决定需要脚本时使用的语言；普通文件编辑仍遵守「文件编辑工具规则」，不能因默认使用 Node 而改用脚本写回代码文件。
 
 ### 默认规则
 
@@ -74,22 +86,23 @@
 
 ## Subagent 默认规则
 
-- 通过 `spawn_agent` 创建 subagent 时，模型和effort选择优先选择能够继承主会话上下文的方案。
+- 通过 `spawn_agent` 创建 subagent 时，优先遵守角色定义的模型、推理强度和上下文路由；继承模型与继承主会话历史分别按对应规则处理。
 - 首轮 code review、复杂架构判断、跨模块调研等高风险任务应使用较高推理强度；首轮 review 后已修复、只做再次复核的任务，或简单只读探索，可以适当降低。
 - 只有用户明确指定其他模型/推理强度，或当前工具能力不支持上述设置时，才允许偏离；如需偏离，先向用户说明原因。
+- 中转服务重启、容量限制、限流或短暂上游错误不等于工具不支持角色设置。遇到这些异常时保留原角色和模型，等待并有限重试；不要立即切换模型、改派其他角色或转由主线程接管。持续失败时先报告实际错误和重试情况。
 - 如果当前会话没有暴露 `spawn_agent`，先用 `tool_search` 查找多 agent 工具；仍不可用时，说明工具不可用，并用当前线程或 `multi_tool_use.parallel` 完成能并行的只读探索。
 
 ### 用户级角色路由
 
-- `~/.codex/agents/general.toml`：执行、根因判断和修复，固定 `gpt-5.6-terra` + `high`。
-- `~/.codex/agents/explorer.toml`：只读定位文件、符号和调用链，固定 `gpt-5.6-luna` + `max`。
+- `~/.codex/agents/general.toml`：执行、根因判断和修复。
+- `~/.codex/agents/explorer.toml`：只读定位文件、符号和调用链。
 - `~/.codex/agents/reviewer.toml`：只读审查，不覆写模型或 effort，继承主线程；派发时不得携带完整主会话历史。
-- `~/.codex/agents/architect.toml`：Brainstorming 并行候选方案探索，不覆写模型或 effort，继承主线程；可执行一次性研究脚本，默认不实现功能、不写最终 Spec/Plan。
+- `~/.codex/agents/architect.toml`：独立候选方案设计，适用于 Superpowers 和 Matt 的方案探索；不覆写模型或 effort，继承主线程；可执行一次性研究脚本，默认不实现功能、不写最终 Spec/Plan。
 - 已禁用插件内置的 `superpowers:requesting-code-review`。涉及实现 Task、重大功能或合并前审查时使用用户级 `$requesting-code-review` skill。
 
 ### 子代理上下文路由
 
-- `general` 与 `explorer` 必须以 `fork_turns: "3"` 派发：只继承最近 3 个主线程回合，既保留当前任务约束，也允许其固定模型/effort 生效。禁止用 `fork_turns: "all"`。
+- `general` 与 `explorer` 可以继承主线程回合，既保留当前任务约束，也允许其固定模型/effort 生效。
 - `reviewer` 与 `architect` 必须以 `fork_turns: "none"` 派发：不继承主线程历史，只接收有界审查包或方案探索 brief；两者的模型/effort 仍按各自 agent 定义继承主线程。
 - 若 `general` 或 `explorer` 需要早期决策，主线程必须把相关事实压缩写入派发 prompt；不得改用完整历史 fork 规避这一规则。
 
@@ -97,6 +110,7 @@
 
 - 未知范围的文件定位、符号检索或调用链事实收集，默认先派 `explorer`；主线程不得先无边界阅读业务代码再形式化派发。
 - `explorer` 只返回可验证证据、绝对路径、影响范围与风险，不修改文件，也不直接给出实现补丁或最终审查结论。
+- 按交付物选择角色：文件、符号和调用链事实交给 `explorer`；需要独立设计职责、接口并说明取舍时交给 `architect`。`architect` 可完成方案所需的有界验证，已有事实足够时不机械补派 `explorer`；主线程负责综合证据与最终横向选择。
 - 已取得证据后，跨模块根因判断、实质修改和审查 finding 修复才派 `general`；范围或风险仍不明确时，继续用 `explorer` 收敛。
 - 仅当目标文件、位置、改法和验证方式都明确，且不涉及跨文件联动、公共 API、共享数据、网络、异步、安全、资源路径或构建链时，主线程可直接完成单文件机械改动；该例外不免除验证与对应 review gate。
 
@@ -170,6 +184,20 @@
 
 ## Superpowers 与交互工具适配
 
+### Matt 与 Superpowers 分工
+
+- 同一任务只使用一套实施流程；默认由 Superpowers 管理设计批准、Spec、Plan、执行和恢复材料。用户明确选择其他完整流程时说明本次归属，不并行启动两套流程。
+- 架构评估、职责和接口设计按需使用 `codebase-design`；用户点名 `improve-codebase-architecture` 时执行完整扫描，先给有证据的重构候选，再按现有设计批准流程进入修改。
+- Matt 扫描中的未知代码事实按上述角色路由使用 `explorer`；独立候选方案设计使用 `architect`。角色选择不取决于插件名称或任务标题里是否出现“架构”。
+- 只读架构调查和候选报告不自动归入 Superpowers 的 `Architectural` 实施流程；缺少 `CONTEXT.md`、`CONTEXT-MAP.md` 或 ADR 也不是升级依据。需要实际重组职责或改变消费者接口时，再按 `brainstorming` 判断范围并进入对应设计与实施流程。
+- `grill-with-docs`、`grilling`、`domain-modeling` 和 `setup-matt-pocock-skills` 由用户明确选择，或作为已选 Matt 入口的必要依赖读取；普通问答不自动进入深入访谈、领域文档写入或项目初始化。
+- 编写或调整 AGENTS.md、skill 和其他 Agent 指令时使用 `writing-for-agents` 检查信息组织与触发边界，使用 `shuorenhua` 做 minimal 文风自查；不改第三方插件缓存来实现个人偏好。
+- 复用已确认的需求、边界和取舍，只补问缺失信息；已有设计批准覆盖的范围不重复完整访谈。调查候选、认可分析结论与批准实施分别记录，不互相替代。
+- 正式 Spec/Plan 沿用项目现有目录和审查门禁；`CONTEXT.md` 只记录领域术语，ADR 只记录值得长期保留的决策，不重复承载需求、实施进度或审查状态。
+- 正式代码审查统一使用用户级 `requesting-code-review` 及现有 reviewer contract；Matt 的代码异味检查可作为补充，不产生第二套审查门禁。
+- 测试、worktree、生成文件、资源验证、提交和外部发布均按当前任务授权及项目规则执行。安装 Matt 技能不等于执行其 setup，也不授权写入项目文档或发布工单。
+- 入口 hook 仅给简短候选提示；跟进消息沿用当前任务状态，不重新启动流程。关键词命中不代表用户授权或门禁通过，具体分流以本节与任务上下文为准。
+
 ### Superpowers 特殊偏好
 
 - 当用户明确要求：在使用 `using-superpowers` 系列 skill 时，不执行 `executing-plans` 里“必须在 worktree 改代码”或“必须先用 `using-git-worktrees` 建立隔离工作区”的要求，必须按用户指令覆盖该默认流程。
@@ -178,7 +206,7 @@
 
 ### Superpowers 触发与 Brainstorming 分类
 
-- 每个新对话或用户启动独立新任务时，先按 `using-superpowers` 做 skill 匹配；仅在相关 skill 适用时调用它。
+- 每个新对话或用户启动独立新任务时，先按上述分工做 skill 匹配；进入 Superpowers 流程时再使用 `using-superpowers`，仅调用适用技能。
 - `brainstorming` 仅用于创建功能/组件、增加能力或改变行为；普通问答、状态汇报、只读调查不进入它，技术故障先走 `systematic-debugging`。
 - 调用 `brainstorming` 后，在第一个澄清问题前声明分类：Spike 是只产出可行性结论的探针；Bounded 是既有流程内的小范围改动，经短设计批准后直接实现、不写 Spec/Plan；Architectural 是新系统、重组关系或影响消费者接口的改动，经设计与 Spec 批准后才进入 `writing-plans`。
 - 复杂度一旦超过当前路径的边界，只能升级到更重路径；每个路径都保留对应的用户批准门。
@@ -206,7 +234,7 @@
 
 - 当 skill 要求在 inline execution、subagent-driven 等执行方式之间让用户选择时，必须在普通可见回复中展示选项并等待用户明确选择；不得自行决定。
 - “未获 subagent 授权”只表示不得直接调用 `spawn_agent`，不表示用户已经授权 inline execution，也不得据此自动退化为当前线程执行。
-- 用户回复“继续”只表示通过当前正在等待的 review gate；除非同一条消息明确指定执行方式，否则不能把“继续”解释为选择 inline。即使 `request_user_input` 不可用，也必须用普通文本提出一个简短问题；“能合理假设就继续推进”不适用于 skill 明确要求的执行方式选择。
+- 用户回复“继续”只表示通过当前正在等待的 review gate；除非同一条消息明确指定执行方式，否则不能把“继续”解释为选择 inline。需要选择时按「用户提问」使用适用工具或普通文本，并等待明确答复；skill 明确要求普通可见消息时遵守该要求。“能合理假设就继续推进”不适用于 skill 明确要求的执行方式选择。
 
 ### Visual Companion 询问可见性
 
@@ -231,10 +259,11 @@
 
 ### 用户提问
 
-- `request_user_input` 可用且场景适合时优先使用。
-- 若 `request_user_input` 不可用，按当前 Codex 模式要求处理：能合理假设就继续推进；必须问时只问 1 个简短问题。
-- 不要为了模拟结构化按钮，在普通文本里写复杂多选题。
-- 真开放题、路径/URL/数字等具体值、贴日志等问题仍用普通文本。
+- `functions.request_user_input_async` 是默认优先的提问工具；当前会话提供且适用时，用它询问缺失信息、偏好、需求范围或必要确认。以实际工具名、定义和当前模式限制为准。
+- 异步问题发出后，可继续不依赖答案的工作；需要明确答案或批准的步骤必须等用户答复，不能把等待超时、预选选项或没有回复当作同意。
+- `functions.request_user_input` 仅在当前模式允许且工具可用时使用；工具出现在列表中不代表当前模式允许调用。
+- 没有适用的提问工具，或用户 / skill 明确要求普通可见消息时，使用普通文本提出简短问题。能根据现有信息合理决定的事项，按当前模式要求继续推进，不额外提问。
+- 问题保持简短、自包含，默认一次只问一个；有明确备选答案时提供简短选项，路径、URL、数字等开放问题可省略选项。不要在普通文本里模拟复杂的多选按钮。
 
 ### Brainstorming 多方案规则
 

@@ -22,11 +22,13 @@
 
 ### SPEC_COMPLIANCE
 
-只检查四件事：缺失的需求、多做的行为、理解错的语义、与绑定约束的冲突。
+只根据绑定需求与约束检查四件事：缺失的需求、多做的行为、理解错的语义、与绑定约束的冲突。不能以合理用户预期为由增加未经批准的功能。
 
 ### CODE_QUALITY
 
 检查正确性、失败路径、类型与数据契约、异步/并发/资源生命周期、安全与性能、真实测试覆盖、可维护性。
+
+即使 Spec 未列出输入、环境或失败条件，也要检查当前变更及最小相关调用链是否符合合理用户预期，并按实际影响定级。检查仍限于本次审查范围，不要求无边界扫描。
 
 ### COMBINED_REVIEW
 
@@ -57,11 +59,17 @@
 - 缺少证据:
 - 取得证据的最小方法:
 
+## Declined to judge
+- 排除的行为:
+- 超出本次范围的理由:
+
 ## 审查结果: PASS | FAIL
 ```
 
 审查结果必须出现两次：正文最顶上的首行 verdict，和正文最下面的 `## 审查结果:` 收尾行。两处取值必须一致，收尾行是整份输出的最后一行。`COMBINED_REVIEW` 的收尾行同时包含两个维度 verdict、`Overall Verdict` 与 `Escalation Required`。`SPEC_DOCUMENT` / `PLAN_DOCUMENT` 的收尾行为 `## 审查结果: Approved | Issues Found`。
 
-`COMBINED_REVIEW` 额外报告 `Escalation Required` 和 `Overall Verdict`。任一 Critical/Important finding 判定对应维度 FAIL。Minor finding 和真实的非阻塞 residual risk 不影响 PASS。证明实现正确所必需的证据缺失是 Important finding，不是 residual risk。
+`COMBINED_REVIEW` 额外报告 `Escalation Required` 和 `Overall Verdict`。任一 Critical/Important finding 判定对应维度 FAIL。Minor finding 和真实的非阻塞 residual risk 不影响 PASS。证明实现正确所必需的证据缺失是 Important finding，不得放入 Residual Risks 或 Declined to judge 绕过阻塞。
+
+所有代码 mode 必须输出 `## Declined to judge`，只列实际考虑过、因超出本次范围而排除的行为及理由；没有排除项时明确写「无」。范围内证据不足的事项归入 Residual Risks 或 finding。此清单不要求扩大扫描范围；主线程须按入口 skill 的「排除项裁定」逐项处理。
 
 Named-risk 检查可以查看 diff 之外的最小相关上下文，用于确认具体的 API、序列化、持久化、路由、权限、并发或生命周期风险。未改动的代码只作支撑证据。

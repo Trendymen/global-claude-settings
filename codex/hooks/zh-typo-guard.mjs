@@ -6,6 +6,8 @@ import { join } from 'node:path';
 const targets = new Set([
     'request_user_input',
     'functions.request_user_input',
+    'request_user_input_async',
+    'functions.request_user_input_async',
     'update_plan',
     'functions.update_plan',
 ]);

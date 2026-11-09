@@ -4,7 +4,6 @@ suppress_unstable_features_warning = true
 model_reasoning_summary = "detailed"
 model_auto_compact_token_limit = 950000
 model_verbosity = "high"
-disable_response_storage = true
 approval_policy = "never"
 model_reasoning_effort = "high"
 sandbox_mode = "danger-full-access"
@@ -18,7 +17,7 @@ network_access = true
 inherit = "core"
 
 [model_providers.custom]
-name = "聚合"
+name = "OpenAI"
 experimental_bearer_token = "xxx"
 wire_api = "responses"
 requires_openai_auth = true
@@ -41,14 +40,6 @@ standalone_web_search = true
 
 [tools.update_plan]
 enabled = true
-
-[[hooks.SessionStart]]
-[[hooks.SessionStart.hooks]]
-type = "command"
-command = 'node "{{CODEX_HOME}}/hooks/session-zh-reminder.mjs"'
-async = false
-timeoutSec = 5
-statusMessage = "注入中文 JSON 提醒"
 
 [[hooks.UserPromptSubmit]]
 matcher = ".*"
@@ -78,7 +69,7 @@ timeoutSec = 5
 statusMessage = "检查脚本语言偏好"
 
 [[hooks.PreToolUse]]
-matcher = "^(request_user_input|functions\\.request_user_input)$"
+matcher = "^(request_user_input|functions\\.request_user_input|request_user_input_async|functions\\.request_user_input_async)$"
 [[hooks.PreToolUse.hooks]]
 type = "command"
 command = 'node "{{CODEX_HOME}}/hooks/ask-user-question-validator.mjs"'
@@ -87,7 +78,7 @@ timeoutSec = 5
 statusMessage = "检查结构化提问质量"
 
 [[hooks.PreToolUse]]
-matcher = "^(request_user_input|functions\\.request_user_input|update_plan|functions\\.update_plan)$"
+matcher = "^(request_user_input|functions\\.request_user_input|request_user_input_async|functions\\.request_user_input_async|update_plan|functions\\.update_plan)$"
 [[hooks.PreToolUse.hooks]]
 type = "command"
 command = 'node "{{CODEX_HOME}}/hooks/zh-typo-guard.mjs"'
@@ -124,7 +115,7 @@ statusMessage = "提醒 Superpowers 文档审查"
 
 [desktop]
 sansFontSize = 13
-usePointerCursors = true
+usePointerCursors = false
 followUpQueueMode = "steer"
 preventSleepWhileRunning = true
 keepRemoteControlAwakeWhilePluggedIn = true
@@ -138,25 +129,35 @@ localeOverride = "zh-CN"
 toys-confetti-enabled = true
 composerPlainTextMode = true
 appearanceLightCodeThemeId = "codex"
+useFontSmoothing = true
+pagesFontSize = 13
 
 [desktop.appearanceLightChromeTheme]
-accent = "#0169cc"
+accent = "#3a83f7"
 accentSource = "chatgpt"
 contrast = 45
-ink = "#0d0d0d"
+ink = "#1a1c1f"
 opaqueWindows = false
 surface = "#ffffff"
 
 [desktop.appearanceLightChromeTheme.fonts]
 code = '"JetBrains Mono"'
+content = '"PingFang SC"'
+ui = '"PingFang SC"'
+
+[desktop.appearanceLightChromeTheme.fonts.uiFace]
+family = "PingFang SC"
+fullName = "苹方-简"
+postscriptName = "PingFangSC-Medium"
 
 [desktop.appearanceLightChromeTheme.semanticColors]
 diffAdded = "#00a240"
-diffRemoved = "#e02e2a"
-skill = "#751ed9"
+diffRemoved = "#ba2623"
+skill = "#924ff7"
 
 [desktop.appearanceDarkChromeTheme]
-accent = "#339cff"
+accent = "#3a83f7"
+accentSource = "chatgpt"
 contrast = 60
 ink = "#ffffff"
 opaqueWindows = false
@@ -164,6 +165,12 @@ surface = "#181818"
 
 [desktop.appearanceDarkChromeTheme.fonts]
 code = '"JetBrains Mono"'
+ui = '"PingFang SC"'
+
+[desktop.appearanceDarkChromeTheme.fonts.uiFace]
+family = "PingFang SC"
+fullName = "苹方-简"
+postscriptName = "PingFangSC-Medium"
 
 [desktop.appearanceDarkChromeTheme.semanticColors]
 diffAdded = "#40c977"
