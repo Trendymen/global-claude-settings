@@ -41,8 +41,14 @@ export function hasTypeScriptEdit(input) {
 
 function gitCommonDir(cwd) {
   if (typeof cwd !== 'string' || !cwd) return '';
+  let actualCwd;
+  try {
+    actualCwd = realpathSync.native(cwd);
+  } catch {
+    return '';
+  }
   const result = spawnSync('git', ['rev-parse', '--git-common-dir'], {
-    cwd,
+    cwd: actualCwd,
     encoding: 'utf8',
     env: { ...process.env, GIT_DIR: undefined, GIT_COMMON_DIR: undefined, GIT_WORK_TREE: undefined },
     timeout: 1000,
@@ -51,7 +57,7 @@ function gitCommonDir(cwd) {
   const commonDir = result.status === 0 ? result.stdout.trim() : '';
   if (!commonDir) return '';
   try {
-    return realpathSync(path.resolve(realpathSync(cwd), commonDir));
+    return realpathSync.native(path.resolve(actualCwd, commonDir));
   } catch {
     return '';
   }

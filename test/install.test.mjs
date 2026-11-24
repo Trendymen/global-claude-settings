@@ -686,8 +686,13 @@ test('tscheck 识别项目目录外的 CreatorFramework worktree', (t) => {
     GIT_COMMON_DIR: path.join(root, '.git'),
     GIT_WORK_TREE: root,
   };
-  const cases = [[linked, true], [symlinked, true], [outside, false], [outside, false, projectGitEnv]];
-  for (const [cwd, expected, env] of cases) {
+  const cases = [
+    ['外置 worktree', linked, true],
+    ['项目子目录链接', symlinked, true],
+    ['独立仓库', outside, false],
+    ['带项目 Git 环境的独立仓库', outside, false, projectGitEnv],
+  ];
+  for (const [name, cwd, expected, env] of cases) {
     const result = runHook('creatorframework-tscheck-reminder.mjs', {
       homeDir,
       cwd: fixtureRoot,
@@ -695,8 +700,8 @@ test('tscheck 识别项目目录外的 CreatorFramework worktree', (t) => {
       env,
     });
     assert.equal(result.status, 0, result.stderr);
-    if (expected) assert.match(result.stdout, /tscheck 提醒/);
-    else assert.equal(result.stdout, '');
+    if (expected) assert.match(result.stdout, /tscheck 提醒/, `${name}应输出 tscheck 提醒`);
+    else assert.equal(result.stdout, '', `${name}应保持静默`);
   }
 });
 
