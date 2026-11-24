@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { readFileSync, realpathSync } from 'node:fs';
+import path from 'node:path';
 
 import {
   getHookCwd,
@@ -37,10 +39,36 @@ export function hasTypeScriptEdit(input) {
   return collectEditedPaths(toolInput).some(filePath => /\.ts$/i.test(filePath.trim()));
 }
 
+function gitCommonDir(cwd) {
+  if (typeof cwd !== 'string' || !cwd) return '';
+  const result = spawnSync('git', ['rev-parse', '--git-common-dir'], {
+    cwd,
+    encoding: 'utf8',
+    env: { ...process.env, GIT_DIR: undefined, GIT_COMMON_DIR: undefined, GIT_WORK_TREE: undefined },
+    timeout: 1000,
+    windowsHide: true,
+  });
+  const commonDir = result.status === 0 ? result.stdout.trim() : '';
+  if (!commonDir) return '';
+  try {
+    return realpathSync(path.resolve(realpathSync(cwd), commonDir));
+  } catch {
+    return '';
+  }
+}
+
+function sharesGitCommonDir(cwd, root) {
+  const commonDir = gitCommonDir(cwd);
+  if (!commonDir) return false;
+  const projectCommonDir = gitCommonDir(root);
+  return Boolean(projectCommonDir) && path.relative(projectCommonDir, commonDir) === '';
+}
+
 export function buildCreatorFrameworkTscheckReminder({ input, homeDir } = {}) {
   const root = loadCreatorFrameworkRoot({ homeDir });
+  if (!root || !hasTypeScriptEdit(input)) return '';
   const cwd = getHookCwd(input);
-  if (!root || !isInsideCreatorFramework(cwd, root) || !hasTypeScriptEdit(input)) return '';
+  if (!isInsideCreatorFramework(cwd, root) && !sharesGitCommonDir(cwd, root)) return '';
 
   return '[tscheck 提醒] 检测到 CreatorFramework 的 TypeScript 文件编辑。结束任务前运行 `node agent-tools/tscheck.mjs --changed`；如需裁剪输出，使用 `--tail=30`。如果 `--changed` 命中 0 个文件，改用显式文件路径检查。';
 }

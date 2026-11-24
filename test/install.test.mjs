@@ -653,6 +653,53 @@ test('配置的 CreatorFramework root 命中后保留 AGENTS 与 tscheck 提醒'
   }
 });
 
+test('tscheck 识别项目目录外的 CreatorFramework worktree', (t) => {
+  const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'creatorframework-linked-worktree-'));
+  t.after(() => fs.rmSync(fixtureRoot, { recursive: true, force: true }));
+  const root = path.join(fixtureRoot, 'CreatorFramework');
+  const linked = path.join(fixtureRoot, 'linked worktree');
+  const symlinked = path.join(fixtureRoot, 'linked subdirectory');
+  const outside = path.join(fixtureRoot, 'other repository');
+  const homeDir = path.join(fixtureRoot, 'home');
+  const fixtureGitEnv = Object.fromEntries(
+    Object.entries(process.env).filter(([name]) => !/^GIT_/i.test(name)),
+  );
+  fixtureGitEnv.GIT_CONFIG_NOSYSTEM = '1';
+  fixtureGitEnv.GIT_CONFIG_GLOBAL = path.join(fixtureRoot, 'gitconfig');
+  for (const args of [
+    ['init', '--quiet', root],
+    ['-C', root, '-c', 'user.name=Test', '-c', 'user.email=test@example.com', '-c', 'commit.gpgsign=false',
+      'commit', '--quiet', '--allow-empty', '-m', 'fixture'],
+    ['-C', root, 'worktree', 'add', '--quiet', '--detach', linked],
+    ['init', '--quiet', outside],
+  ]) {
+    const result = spawnSync('git', args, { encoding: 'utf8', env: fixtureGitEnv });
+    assert.equal(result.status, 0, result.stderr);
+  }
+  writeCreatorFrameworkConfig(homeDir, root);
+  const nested = path.join(root, 'assets');
+  fs.mkdirSync(nested);
+  fs.symlinkSync(nested, symlinked, HOST === 'win32' ? 'junction' : 'dir');
+
+  const projectGitEnv = {
+    GIT_DIR: path.join(root, '.git'),
+    GIT_COMMON_DIR: path.join(root, '.git'),
+    GIT_WORK_TREE: root,
+  };
+  const cases = [[linked, true], [symlinked, true], [outside, false], [outside, false, projectGitEnv]];
+  for (const [cwd, expected, env] of cases) {
+    const result = runHook('creatorframework-tscheck-reminder.mjs', {
+      homeDir,
+      cwd: fixtureRoot,
+      input: JSON.stringify({ cwd, tool_input: { patch: '*** Update File: assets/example.ts' } }),
+      env,
+    });
+    assert.equal(result.status, 0, result.stderr);
+    if (expected) assert.match(result.stdout, /tscheck 提醒/);
+    else assert.equal(result.stdout, '');
+  }
+});
+
 test('规则同步 wrapper 在 root 未命中时不启动子进程', () => {
   const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'creatorframework-rule-sync-miss-'));
   try {

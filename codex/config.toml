@@ -24,9 +24,11 @@ requires_openai_auth = true
 supports_websockets = true
 supports_standalone_web_search = true
 
+[agents]
+max_concurrent_threads_per_session = 63
+
 [features.multi_agent_v2]
-max_concurrent_threads_per_session = 64
-enabled = true
+enabled = false
 
 [features]
 enable_request_compression = false
